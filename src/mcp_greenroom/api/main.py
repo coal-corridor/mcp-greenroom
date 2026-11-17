@@ -6,7 +6,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from mcp_greenroom.api import errors
-from mcp_greenroom.api.routers import servers, submissions
+from mcp_greenroom.api.routers import reviews, servers, submissions
 from mcp_greenroom.config import Settings, load_settings
 from mcp_greenroom.store import SqlStore
 
@@ -26,5 +26,6 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings = settings
     errors.install(app)
     app.include_router(submissions.router)
+    app.include_router(reviews.router)
     app.include_router(servers.router)
     return app

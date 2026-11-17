@@ -75,7 +75,7 @@ def _refuse(store: SqlStore, identity: Identity, settings: Settings, refusal: Re
     )
 
 
-def _result(stored: StoredSubmission) -> SubmissionResult:
+def result_of(stored: StoredSubmission) -> SubmissionResult:
     return SubmissionResult(
         **stored.decision.model_dump(),
         submission_id=stored.id,
@@ -99,7 +99,7 @@ def _existing(store: SqlStore, submission: Submission, response: Response) -> Ba
             submission_id=stored.id,
         )
     response.status_code = status.HTTP_200_OK
-    return _result(stored)
+    return result_of(stored)
 
 
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=SubmissionResult)
@@ -152,3 +152,25 @@ def submit(
         version=submission.version,
         submitted_by=identity.id,
     )
+
+
+def get_submission(store: SqlStore, submission_id: str) -> StoredSubmission:
+    """The stored submission, or a 404 ApiError."""
+    stored = store.get(submission_id)
+    if stored is None:
+        raise ApiError(
+            status.HTTP_404_NOT_FOUND,
+            "submission.not_found",
+            "Lookup failed: no decided submission has this id. "
+            "Use the submission_id returned when the version was submitted.",
+        )
+    return stored
+
+
+@router.get("/{submission_id}", response_model=SubmissionResult)
+def read_status(
+    submission_id: str,
+    identity: Annotated[Identity, Depends(get_identity)],
+    store: Annotated[SqlStore, Depends(get_store)],
+) -> BaseModel:
+    return result_of(get_submission(store, submission_id))
