@@ -78,3 +78,17 @@ def test_a_missing_credential_is_refused_with_401(client: TestClient) -> None:
 
     assert response.status_code == 401
     assert response.json()["rule_id"] == "auth.unknown_credential"
+
+
+@pytest.mark.parametrize(
+    ("method", "path", "code"),
+    [("GET", "/no-such-route", 404), ("DELETE", "/v0.1/servers", 405)],
+)
+def test_unknown_routes_and_methods_carry_a_rule_id(
+    client: TestClient, method: str, path: str, code: int
+) -> None:
+    response = client.request(method, path)
+
+    assert response.status_code == code
+    assert response.json()["rule_id"] == f"http.{code}"
+    assert response.json()["message"]
