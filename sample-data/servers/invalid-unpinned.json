@@ -1,0 +1,45 @@
+{
+  "server": {
+    "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+    "name": "com.examplebank/invalid-unpinned",
+    "title": "Currency rates",
+    "description": "Currency rates, submitted without a pinned version.",
+    "version": "latest",
+    "repository": {
+      "url": "https://git.examplebank.com/mcp/invalid-unpinned",
+      "source": "github"
+    },
+    "packages": [
+      {
+        "registryType": "npm",
+        "registryBaseUrl": "https://registry.npmjs.org",
+        "identifier": "@examplebank/invalid-unpinned-mcp",
+        "version": "latest",
+        "transport": {
+          "type": "stdio"
+        }
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "get_rate",
+      "description": "Return the reference exchange rate between two currencies.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "string"
+          },
+          "quote": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "base",
+          "quote"
+        ]
+      }
+    }
+  ]
+}

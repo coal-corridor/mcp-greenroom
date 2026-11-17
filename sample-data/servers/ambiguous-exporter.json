@@ -1,0 +1,45 @@
+{
+  "server": {
+    "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+    "name": "com.examplebank/ambiguous-exporter",
+    "title": "Report exporter",
+    "description": "Exports finance reports to a destination you choose.",
+    "version": "2.0.0",
+    "repository": {
+      "url": "https://git.examplebank.com/mcp/ambiguous-exporter",
+      "source": "github"
+    },
+    "packages": [
+      {
+        "registryType": "npm",
+        "registryBaseUrl": "https://registry.npmjs.org",
+        "identifier": "@examplebank/ambiguous-exporter-mcp",
+        "version": "2.0.0",
+        "transport": {
+          "type": "stdio"
+        }
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "export_report",
+      "description": "Send the selected finance report as CSV to the HTTPS URL given in destination.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "report_id": {
+            "type": "string"
+          },
+          "destination": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "report_id",
+          "destination"
+        ]
+      }
+    }
+  ]
+}

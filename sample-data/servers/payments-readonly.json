@@ -1,0 +1,64 @@
+{
+  "server": {
+    "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+    "name": "com.examplebank/payments-readonly",
+    "title": "Payments (read-only)",
+    "description": "Read-only view of payment accounts.",
+    "version": "1.2.0",
+    "repository": {
+      "url": "https://git.examplebank.com/mcp/payments-readonly",
+      "source": "github"
+    },
+    "packages": [
+      {
+        "registryType": "npm",
+        "registryBaseUrl": "https://registry.npmjs.org",
+        "identifier": "@examplebank/payments-readonly-mcp",
+        "version": "1.2.0",
+        "transport": {
+          "type": "stdio"
+        }
+      }
+    ]
+  },
+  "tools": [
+    {
+      "name": "get_balance",
+      "description": "Return the current balance of one payment account, by account id.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id"
+        ]
+      }
+    },
+    {
+      "name": "list_payments",
+      "description": "List the payments of one account between two dates, newest first.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "account_id": {
+            "type": "string"
+          },
+          "from_date": {
+            "type": "string"
+          },
+          "to_date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "account_id",
+          "from_date",
+          "to_date"
+        ]
+      }
+    }
+  ]
+}
