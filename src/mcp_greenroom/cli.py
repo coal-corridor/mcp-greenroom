@@ -42,6 +42,9 @@ COMMANDS = (
 TRANSPORT: httpx.BaseTransport | None = None
 
 TIMEOUT_SECONDS = 10.0
+MAX_PAGES = 1000
+DEGRADED_HEADER = "X-Greenroom-Degraded"  # set by GET /v0.1/servers when serving last-good
+GENERATED_AT_HEADER = "X-Greenroom-Generated-At"
 
 app = typer.Typer(add_completion=False, no_args_is_help=False)
 
@@ -88,30 +91,38 @@ def main(ctx: typer.Context) -> None:
     out.print(f"[dim]Next: {NAME} --help, or {NAME} COMMAND --help[/dim]")
 
 
-def _call(
-    method: str, path: str, api: str | None, token: str | None, as_json: bool, **kwargs: Any
-) -> Any:
-    """Send one request. Returns the JSON body of a 2xx answer, or exits with a clear error.
-
-    With as_json, the body is also printed unchanged, alone on standard output.
-    """
+def _send(method: str, path: str, api: str | None, token: str | None, **kwargs: Any) -> Any:
+    """Send one request and return the response. Exits with a clear error if unreachable."""
     with _client(api, token) as client:
         try:
-            response = client.request(method, path, **kwargs)
+            return client.request(method, path, **kwargs)
         except httpx.HTTPError as exc:
             fail(
                 f"The API is unreachable ({type(exc).__name__}).",
                 f"{method} {client.base_url.join(path)}",
                 "Start it with 'make run', or pass the right address with --api.",
             )
-    if as_json and response.content:
-        sys.stdout.write(response.text.rstrip("\n") + "\n")
+
+
+def _json(response: httpx.Response) -> Any:
+    """The JSON body of a 2xx answer, or exit with the API's error."""
     if not response.is_success:
         _fail_from(response)
     try:
         return response.json()
     except ValueError:
         fail("The API answer is not JSON.", f"HTTP {response.status_code}", "Check --api.")
+
+
+def _call(
+    method: str, path: str, api: str | None, token: str | None, as_json: bool, **kwargs: Any
+) -> Any:
+    """Send one request and return its JSON body. With as_json, also print the body unchanged,
+    alone on standard output."""
+    response = _send(method, path, api, token, **kwargs)
+    if as_json and response.content:
+        sys.stdout.write(response.text.rstrip("\n") + "\n")
+    return _json(response)
 
 
 def _error_body(response: httpx.Response) -> dict[str, Any]:
@@ -236,6 +247,54 @@ def audit(
         for reason in event.get("reasons") or []:
             out.print(Text("    ").append(inert(f"{reason.get('code')}: {reason.get('message')}")))
     next_step(f"{NAME} status {submission_id}")
+    raise typer.Exit(EXIT_OK)
+
+
+@app.command("list")
+def list_servers(
+    api: ApiOption = None, token: TokenOption = None, as_json: JsonOption = False
+) -> None:
+    """List the approved versions on the registry, every page.
+
+    Example: mcp-greenroom list
+    """
+    records: list[dict[str, Any]] = []
+    degraded_since: str | None = None
+    cursor: str | None = None
+    for _ in range(MAX_PAGES):
+        response = _send(
+            "GET", "/v0.1/servers", api, token, params={"cursor": cursor} if cursor else {}
+        )
+        body = _json(response)
+        records += body.get("servers") or []
+        if response.headers.get(DEGRADED_HEADER, "").lower() == "true":
+            degraded_since = response.headers.get(GENERATED_AT_HEADER, "an unknown time")
+        cursor = (body.get("metadata") or {}).get("nextCursor")
+        if not cursor:
+            break
+    if as_json:  # one ServerList document holding every page
+        sys.stdout.write(
+            json.dumps({"servers": records, "metadata": {"count": len(records)}}) + "\n"
+        )
+        raise typer.Exit(EXIT_OK)
+    out = stdout_console()
+    if degraded_since:
+        out.print(
+            Text(
+                f"! degraded: the registry serves its last-good copy from {degraded_since}.",
+                style="yellow",
+            )
+        )
+    for record in records:
+        server = record.get("server") or {}
+        out.print(
+            Text("  ")
+            .append(inert(server.get("name")))
+            .append(" ")
+            .append(inert(server.get("version")))
+        )
+    out.print(Text(f"{len(records)} approved version(s)."))
+    next_step(f"{NAME} client-check CONFIG, to see what a client would allow")
     raise typer.Exit(EXIT_OK)
 
 
