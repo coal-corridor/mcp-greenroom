@@ -1,6 +1,6 @@
 # Handoff: edge on area/edge
 
-State at commit ac73780 (2026-11-17). Uncommitted files: none (this note aside).
+State at commit e54a9b8 (2026-11-17). Uncommitted files: none (this note aside).
 
 ## Goal
 Drive every step of the demo from the `mcp-greenroom` CLI over HTTP, plus a client simulator of Amp's documented registry check (briefs/area-edge.md).
@@ -37,4 +37,4 @@ As approved: setup; client simulator; CLI skeleton with client-check; exit codes
 none
 
 ## Next step
-User runs `/open-area-pr` for area/edge.
+Pull request area/edge -> main opened with `/open-area-pr`: watch its checks; the user merges.
