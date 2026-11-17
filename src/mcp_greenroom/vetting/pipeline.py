@@ -70,8 +70,14 @@ class VettingPipeline:
         return self._decide(submission.tools)
 
     def _decide(self, tools: Sequence[Tool]) -> Decision:
+        # Scanner findings are shown with every outcome, as evidence beside the result.
         scanned, scanner_failed = self._scan(tools)
+        decision = self._steps_2_to_8(tools, scanned, scanner_failed)
+        return decision.model_copy(update={"findings": (*decision.findings, *scanned)})
 
+    def _steps_2_to_8(
+        self, tools: Sequence[Tool], scanned: Sequence[Finding], scanner_failed: bool
+    ) -> Decision:
         # Step 2. Hidden characters in a name or description: rejected.
         hidden = hidden_characters(tools)
         if hidden:
@@ -151,7 +157,7 @@ class VettingPipeline:
                 reasons.append(
                     Reason(code="scanner.unavailable", message="The scanner could not run.")
                 )
-            return self._decision(Outcome.HUMAN_REVIEW, tier, reasons, scanned, risks)
+            return self._decision(Outcome.HUMAN_REVIEW, tier, reasons, [], risks)
 
         # Step 7. Tier medium or high: human review.
         if tier is not Tier.LOW:
