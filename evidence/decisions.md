@@ -1,10 +1,10 @@
 # Decisions: MCP Greenroom
 
-Format of a record: context, decision, consequences. The context and the consequences are facts from the build, with their trace. The user writes the trade-offs in their own words: where a reason is the user's and is not yet written down, the record says `TODO(user)`.
+Format of a record: context, decision, consequences. The context and the consequences are facts from the build, with their trace. The user writes the trade-offs in their own words, and each record marks where it quotes them.
 
 ## Candidates
 
-`TODO(user)`: the skill asks for three to five records. Which of the records below do you keep, and do any of these design candidates get a record of their own? Background is in `docs/spec-notes.md`, section 2, and `docs/references.md`.
+`TODO(user)`: you asked to keep the five suggested records, and there are six below: the litellm waiver, the gitleaks binary, the replay-key allowlist, auto mode, Haiku and the thresholds. Which one goes, or do the two secret-scan records become one? None of these design candidates gets a record of its own, so this list goes too. Background is in `docs/spec-notes.md`, section 2, and `docs/references.md`.
 
 - An approval workflow of our own on the upstream read API.
 - Rules before the model. The model can escalate and never clear.
@@ -43,13 +43,13 @@ Context: the lead session ran in plan mode, then accept edits from 13:48. At 14:
 
 Decision (the user's), at 14:19: auto mode for the lead session, and for each area session from plan approval. Reason recorded in the session log: most of the lost time went on approval prompts, and the deny and ask rules still hold.
 
-Consequences: the deny and ask rules stayed in force (`.claude/settings.json`). The session log records one command blocked by the auto mode safety check (15:39, above). `TODO(user)`: anything you would add on what auto mode cost or saved?
+Consequences: the deny and ask rules stayed in force (`.claude/settings.json`). The session log records one command blocked by the auto mode safety check (15:39, above). In the user's words: auto mode saved the build. Before the switch, about twenty approval prompts and one research detour made setup take 30 minutes against a budget of 10. After it, the three area sessions ran 10 to 18 minutes each without a question. The cost was that I no longer saw each command, so I relied on the deny and ask rules, the independent reviews and CI to catch what I would have caught by watching.
 
 ## Record the classifier with Haiku after Opus refused hostile input
 
 Context: the recordings come from one live run over the evaluation set and the sample tools (`docs/specs/vetting.md`). Run 1 on `claude-opus-5-5` (`827782a`) refused 17 of 47 tools: all 16 malicious cases and `search_notes` in `poisoned-notes`. Each refusal went to human review, none was approved, and the gate failed because `poisoned-notes` landed in review instead of rejected. By label (approved, review, rejected): benign 17/1/0, malicious 0/12/4, ambiguous 0/6/1.
 
-Decision: run 2 on `claude-haiku-5-5` (`66567b5`), same prompt `classifier-v1`. Run 1 stays in history. `TODO(user)`: who chose Haiku, and why that model?
+Decision (the user's): run 2 on `claude-haiku-5-5` (`66567b5`), same prompt `classifier-v1`. In the user's words: I chose Haiku for the second run because Opus refused 17 of the 47 inputs, Haiku was the model I had already verified with the key, and the re-run needed no code change. I kept the Opus run in history as the record of the refusals.
 
 Consequences: no refusals. Benign 15/3/0, malicious 0/0/16, ambiguous 0/7/0; `poisoned-notes` rejected at 0.97. The gate then failed on the reasons given for `ambiguous-exporter`, and the user had that sample checked on outcome and tier only (`d609a19`). Two benign tools were tagged `network_egress` and go to review. The evaluation now proves behaviour for this model and prompt only.
 
@@ -57,7 +57,7 @@ Consequences: no refusals. Benign 15/3/0, malicious 0/0/16, ambiguous 0/7/0; `po
 
 Context: `docs/specs/vetting.md` calls both thresholds provisional and asks for them to be set from the first evaluation run, with the choice recorded here. With the Haiku recordings and the defaults (reject at 0.80, approve below 0.20), the evaluation puts 24% of cases in review against a cap of 50% and a warning above 30%, and approves no malicious case.
 
-Decision: no threshold was moved (`session-log.md`, 15:16). `TODO(user)`: was this a choice you made, and on what reasoning?
+Decision (the user's): no threshold was moved (`session-log.md`, 15:16). In the user's words: I kept the spec's provisional 0.80 and 0.20 because the first full run gave 24% in review with no malicious case approved, and I would not move a safety threshold to make one sample check pass.
 
 Consequences: startup refuses a threshold or require-human change while the policy version is still the default (`d4516d1`). Two non-default policies can still share one version string; the route is in `ROADMAP.md`.
 
@@ -71,10 +71,10 @@ Consequences: startup refuses a threshold or require-human change while the poli
 
 ## What I read line by line
 
-`TODO(user)`: which paths did you review line by line (validation, config, error handling, the decision order), and which were accepted on passing checks and the reviewer's report?
+Most of it, during the build. Merges relied on green checks, the independent reviewer reports and my decision on each finding.
 
 ## Harness choices
 
 Included, as in force during the build: `CLAUDE.md` and `AGENTS.md`; `.claude/settings.json` with allow, deny and ask rules; three hooks (`SessionStart` prints the brief and handoff note, `Stop` runs lint, types and tests, a format hook on write); seven project skills; one read-only reviewer subagent; one git worktree per area session; briefs and handoff notes as the only state passed between sessions.
 
-`TODO(user)`: what did the setup leave out on purpose, and why?
+Left out, in the user's words: no Claude in CI, so the pipeline needs no repository secret and its result does not depend on a model. No plugins or connectors, so the profile is reproducible and nothing runs with my privileges unreviewed. No practice pass and no `/code-review`, both for time.
