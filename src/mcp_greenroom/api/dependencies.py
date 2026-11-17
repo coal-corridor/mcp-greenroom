@@ -1,6 +1,6 @@
 """Injection points. Tests swap each one through app.dependency_overrides.
 
-Frozen names and return types.
+Frozen names. get_store returns SqlStore, not interfaces.Store (user decision at integration).
 Example in a test:
 
     app.dependency_overrides[get_pipeline] = lambda: FakePipeline()
