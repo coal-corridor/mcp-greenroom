@@ -126,13 +126,21 @@ def _json(response: httpx.Response) -> Any:
         fail("The API answer is not JSON.", f"HTTP {response.status_code}", "Check --api.")
 
 
+def _is_json(response: httpx.Response) -> bool:
+    try:
+        response.json()
+    except ValueError:
+        return False
+    return True
+
+
 def _call(
     method: str, path: str, api: str | None, token: str | None, as_json: bool, **kwargs: Any
 ) -> Any:
     """Send one request and return its JSON body. With as_json, also print the body unchanged,
     alone on standard output."""
     response = _send(method, path, api, token, **kwargs)
-    if as_json and response.content:
+    if as_json and _is_json(response):  # unchanged, hidden characters included: machine output
         sys.stdout.write(response.text.rstrip("\n") + "\n")
     return _json(response)
 
