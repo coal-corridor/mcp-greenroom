@@ -162,13 +162,21 @@ class VettingPipeline:
             )
             return self._decision(Outcome.HUMAN_REVIEW, tier, [reason], [], risks)
 
-        return self._decision(
-            Outcome.HUMAN_REVIEW,
-            tier,
-            [Reason(code="vetting.not_built", message="Not built yet.")],
-            [],
-            risks,
+        # Step 8. Tier low: approved by policy, or human review when policy demands a human.
+        if self.policy.require_human_for_all:
+            reason = Reason(
+                code="policy.human_required",
+                message="Tier low, but policy demands a human for every server.",
+            )
+            return self._decision(Outcome.HUMAN_REVIEW, tier, [reason], [], risks)
+        reason = Reason(
+            code="policy.tier_low",
+            message=(
+                f"Tier low, every risk score below {self.policy.approve_threshold:.2f}, "
+                "no rule or scanner match."
+            ),
         )
+        return self._decision(Outcome.APPROVED, tier, [reason], [], risks)
 
     def _scan(self, tools: Sequence[Tool]) -> tuple[list[Finding], bool]:
         """Scanner findings, and whether the scan failed. Evidence only."""
