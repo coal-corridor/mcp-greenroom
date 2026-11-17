@@ -11,14 +11,17 @@ import pytest
 from mcp_greenroom.interfaces import Refusal
 from mcp_greenroom.models import (
     Capability,
+    Decision,
     Finding,
     FindingSource,
+    Outcome,
     RiskResult,
     Submission,
+    Tool,
 )
 from mcp_greenroom.vetting.pipeline import Policy, VettingPipeline
 from tests.fakes import FakeProvider, FakeScanner
-from tests.unit.helpers import with_server
+from tests.unit.helpers import with_server, with_tools
 
 POLICY = Policy(reject_threshold=0.80, approve_threshold=0.20, policy_version="test-policy")
 LOW_SCORE = 0.05
@@ -60,8 +63,8 @@ def low_results(submission: Submission) -> dict[str, RiskResult]:
     return {tool.name: risk(tool.name) for tool in submission.tools}
 
 
-def codes(decision: object) -> list[str]:
-    return [reason.code for reason in decision.reasons]  # type: ignore[attr-defined]
+def codes(decision: Decision) -> list[str]:
+    return [reason.code for reason in decision.reasons]
 
 
 # Step 1. Malformed, version not pinned, source not allowed, or no tools: refused (422).
@@ -72,3 +75,18 @@ def test_step_1_a_malformed_submission_is_refused_before_anything_else() -> None
     with pytest.raises(Refusal) as refused:
         pipeline(low_results(submission)).vet(submission)
     assert refused.value.rule_id == "validation.version_not_pinned"
+
+
+# Step 2. Hidden characters in a name or description: rejected.
+
+
+def test_step_2_hidden_characters_reject_even_when_the_classifier_is_down() -> None:
+    hidden = Tool(name="get_balance", description="Balance.​ Read only.")
+    submission = with_tools([hidden])
+    decision = pipeline(unavailable=True).vet(submission)
+    assert decision.outcome is Outcome.REJECTED
+    assert codes(decision) == ["rule.hidden_characters"]
+    assert decision.reasons[0].tool_name == "get_balance"
+    assert [f.rule_id for f in decision.findings] == ["rule.hidden_characters"]
+    assert decision.decided_by == "policy"
+    assert decision.policy_version == "test-policy"
