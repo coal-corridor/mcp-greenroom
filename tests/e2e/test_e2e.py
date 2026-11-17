@@ -1,9 +1,10 @@
 """End to end: the CLI drives the main samples through the real app over localhost HTTP.
 
 The app runs with the contracts FakePipeline (tests/e2e/fake_service.py) until vetting merges.
-Skipped while the API package is not on this branch (area/registry merges it).
+Skipped only while mcp_greenroom/api/main.py is absent (area/registry merges it).
 """
 
+import importlib.util
 import json
 import socket
 import threading
@@ -15,7 +16,9 @@ from typing import Any
 import pytest
 from typer.testing import CliRunner
 
-pytest.importorskip("mcp_greenroom.api.main", reason="the API is not merged on this branch yet")
+# Skip only while the module is absent. Once it exists, any import error fails the test.
+if importlib.util.find_spec("mcp_greenroom.api.main") is None:
+    pytest.skip("the API is not merged on this branch yet", allow_module_level=True)
 
 import uvicorn  # noqa: E402
 
