@@ -1,10 +1,8 @@
 # Design: MCP Greenroom
 
-Written from the code at commit `f117754`. Background and sources are in `docs/spec-notes.md`. Nothing here was deployed.
-
 ## Architecture
 
-One Python service and one CLI, in one package (`src/mcp_greenroom/`, 3,258 lines of Python).
+One Python service and one CLI, in one package (`src/mcp_greenroom/`).
 
 ```text
 mcp-greenroom CLI ──HTTP──▶ API (FastAPI)
@@ -52,14 +50,10 @@ What never leaves the service: scores, findings, offending text, reviewer notes 
 
 ## Trade-offs
 
-Drawn from `docs/spec-notes.md` section 2. Each names what the slice gave up.
-
-- **Rules before the model; the model can escalate and never clear.** Given up: a model that could clear a borderline case on its own. Cost seen in the evaluation: three benign tools in review.
-- **Replay as the default provider.** Given up: judging any tool not in the recordings. Every unseen tool goes to a human.
-- **Scanner as evidence, own classifier for the decision.** Given up: a single vendor tool for the whole check. The scanner returns no score and no capability tags, so it cannot drive tiers.
-- **A last-good copy on the read path.** Given up: freshness while the store is down. The copy has no expiry.
-
-These four are kept as drafted. They come from the spec notes prepared before the build, listed in `agentic-workflow.md`, section 2.
+- **The fixed rules run first, and the model can only make a result stricter.** The classifier can send a server to human review or get it rejected, but it can never approve one that a rule has stopped. The price: the model cannot clear a borderline case by itself. It showed in the evaluation, where three harmless tools went to human review.
+- **By default the classifier replays recorded answers and calls no model.** The service needs no key and no network, and gives the same answer every time. The price: it can only judge tools it has a recording for. Any tool it has not seen goes to a human.
+- **The Cisco scanner provides evidence, and our own classifier drives the decision.** The scanner's findings are shown beside every outcome and can hold back an approval. The price: two checks to maintain where one vendor tool might have covered everything. The scanner returns no risk score and no capability tags, so it could not set the risk tier alone.
+- **The approved list is still served when the database is down.** The service keeps a last-good copy of the list and serves it, marked as degraded. The price: that copy can be out of date, and it never expires.
 
 ## Security and privacy
 
@@ -96,7 +90,7 @@ The stack was fixed by the spec before the build.
 
 ## Production shape
 
-In words only, from `docs/spec-notes.md` section 3, `deploy/README.md` and `ROADMAP.md` Phase 2. The deployment route is in [`operate.md`](operate.md).
+The deployment route is in [`operate.md`](operate.md).
 
 - Single sign-on replaces the stub tokens; reviewer is a directory group.
 - Managed PostgreSQL with migrations; audit insert-only by grants as well as triggers; audit streamed to the SIEM.

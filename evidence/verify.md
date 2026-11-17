@@ -29,8 +29,6 @@ verify: all requested stages passed or were skipped.
 
 The pytest progress dots and the evaluation report are left out of this block. The report is in the next section.
 
-Earlier fresh clones, both before the merge of pull request 5: at `f117754` (new directory, `uv sync`, `./scripts/verify.sh`, `./scripts/demo.sh`: all exit 0, `433 passed in 19.74s`), and after the README was written (`00cd4e5`), following its Setup section (cloned from the local repository, branch `evidence`): all exit 0, `433 passed in 20.60s`, `Demo complete: every step gave the exit code it expected.` In the worktree at `38c46d7`, just after the merge: exit 0, `436 passed in 14.73s`, demo exit 0.
-
 ## Tests
 
 436 tests, counted with `uv run pytest --collect-only -q`.
