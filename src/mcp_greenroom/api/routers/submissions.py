@@ -4,7 +4,7 @@ import uuid
 from datetime import UTC, datetime
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Body, Depends, status
+from fastapi import APIRouter, Body, Depends, Response, status
 from pydantic import BaseModel, ValidationError
 
 from mcp_greenroom.api.dependencies import get_identity, get_pipeline, get_settings, get_store
@@ -20,7 +20,7 @@ from mcp_greenroom.models import (
     Reason,
     Submission,
 )
-from mcp_greenroom.store import SqlStore
+from mcp_greenroom.store import SqlStore, StoredSubmission, VersionTaken
 
 router = APIRouter(prefix="/submissions", tags=["submissions"])
 
@@ -75,8 +75,36 @@ def _refuse(store: SqlStore, identity: Identity, settings: Settings, refusal: Re
     )
 
 
+def _result(stored: StoredSubmission) -> SubmissionResult:
+    return SubmissionResult(
+        **stored.decision.model_dump(),
+        submission_id=stored.id,
+        name=stored.name,
+        version=stored.version,
+        submitted_by=stored.submitted_by,
+    )
+
+
+def _existing(store: SqlStore, submission: Submission, response: Response) -> BaseModel | None:
+    """The stored decision for identical content; 409 for other content; None if new."""
+    stored = store.find(str(submission.name), str(submission.version))
+    if stored is None:
+        return None
+    if stored.fingerprint != fingerprint(submission):
+        raise ApiError(
+            status.HTTP_409_CONFLICT,
+            "submission.version_exists",
+            f"Submission refused: {submission.name} {submission.version} already has a decision "
+            "and its content differs. Versions are immutable: publish the change as a new version.",
+            submission_id=stored.id,
+        )
+    response.status_code = status.HTTP_200_OK
+    return _result(stored)
+
+
 @router.post("", status_code=status.HTTP_201_CREATED, response_model=SubmissionResult)
 def submit(
+    response: Response,
     payload: Annotated[dict[str, Any], Body()],
     identity: Annotated[Identity, Depends(get_identity)],
     pipeline: Annotated[Pipeline, Depends(get_pipeline)],
@@ -85,6 +113,8 @@ def submit(
 ) -> BaseModel:
     try:
         submission = _parse(payload)
+        if (existing := _existing(store, submission, response)) is not None:
+            return existing
         decision = pipeline.vet(submission)
     except Refusal as refusal:
         raise _refuse(store, identity, settings, refusal) from None
@@ -107,7 +137,14 @@ def submit(
             policy_version=decision.policy_version,
         ),
     ]
-    store.create(submission_id, submission, fingerprint(submission), identity.id, decision, events)
+    try:
+        store.create(
+            submission_id, submission, fingerprint(submission), identity.id, decision, events
+        )
+    except VersionTaken:  # a concurrent submission of the same version won the race
+        if (existing := _existing(store, submission, response)) is not None:
+            return existing
+        raise
     return SubmissionResult(
         **decision.model_dump(),
         submission_id=submission_id,
