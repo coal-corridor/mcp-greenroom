@@ -2,17 +2,6 @@
 
 Format of a record: context, decision, consequences. The context and the consequences are facts from the build, with their trace. The user writes the trade-offs in their own words, and each record marks where it quotes them.
 
-## Candidates
-
-`TODO(user)`: you asked to keep the five suggested records, and there are six below: the litellm waiver, the gitleaks binary, the replay-key allowlist, auto mode, Haiku and the thresholds. Which one goes, or do the two secret-scan records become one? None of these design candidates gets a record of its own, so this list goes too. Background is in `docs/spec-notes.md`, section 2, and `docs/references.md`.
-
-- An approval workflow of our own on the upstream read API.
-- Rules before the model. The model can escalate and never clear.
-- Replay as the default classifier provider.
-- Scanner rules as evidence, our own judge for the decision.
-- A last-good copy on the read path.
-- A service, not a Git repository with pull requests.
-
 ## Waive two litellm advisories in the dependency audit
 
 Context: on 2026-11-17, `uv audit` (uv 0.13.8) on the first lock found two advisories in `litellm 1.93.2`: GHSA-g5ff-637f-6q2m (local file read, fixed in 1.95.0) and GHSA-7hp6-4w63-5g45 (privilege escalation to proxy admin, fixed in 1.100.4 and later). `litellm` comes only through `cisco-ai-mcp-scanner` 4.8.7, which pins it exactly (`litellm==1.93.2`), so a bump would override the scanner's own pin. Both advisories are in the LiteLLM proxy server. This project uses only the scanner's YARA engine and never starts that proxy.
