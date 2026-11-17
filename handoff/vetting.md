@@ -1,6 +1,6 @@
 # Handoff: vetting on area/vetting
 
-State at commit b48c974 (2026-11-17, 15:20). Uncommitted files: none. Ready for /review-area.
+State at commit 9a0b86f (2026-11-17, 15:34). Uncommitted files: none. Review fixed; ready for /open-area-pr.
 
 ## Goal
 Given a submission, the pipeline returns the outcome the decision order demands, with evidence, for every sample and every evaluation case.
@@ -19,12 +19,12 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 ```
   lint   pass   0.1s
   types  pass   0.2s
-  test   pass   9.5s   (252 passed; YARA import ~2.5 s per process)
-  eval   pass   5.4s   (24% in review, no malicious approved, scanner 6/16 malicious)
+  test   pass   8.5s   (300 passed)
+  eval   pass   3.1s   (24% in review, no malicious approved)
 ```
 
 ## Open
-For the lead: `get_pipeline` should call `build_pipeline(settings)` once at startup (YARA import ~2.5 s), then reuse it.
+For the lead: `get_pipeline` builds `build_pipeline(settings)` once at startup (YARA import ~2.5 s). Known gaps (`handoff/vetting-review.md`): thresholds and require-human can change without the policy version (finding 4, lead decides at integration); duplicate tool names allowed (11, roadmap); the registry-override list cannot be complete (3, roadmap: build the install command ourselves).
 
 ## Decisions and corrections
 - Opus run (61,891 in / 2,873 out): 17/47 refused (16 malicious + search_notes) -> review; gate failed on poisoned-notes. By label (appr/review/rej): benign 17/1/0, malicious 0/12/4, ambiguous 0/6/1.
@@ -37,4 +37,4 @@ For the lead: `get_pipeline` should call `build_pipeline(settings)` once at star
 none
 
 ## Next step
-User runs /review-area.
+User runs /open-area-pr.
