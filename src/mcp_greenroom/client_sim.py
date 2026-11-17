@@ -7,6 +7,7 @@ same registry type and identifier.
 """
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -28,18 +29,48 @@ class Verdict:
     reason: str
 
 
+# Flags that name a package beside the server's own: the server is blocked, never matched.
+_SECOND_PACKAGE_FLAGS = frozenset(
+    {"--with", "--with-editable", "--with-requirements", "-w", "-p", "--package"}
+)
+
+
 def _strip_version(spec: str) -> str:
-    """'@scope/pkg@1.2.0' -> '@scope/pkg'. The version is not part of the match."""
+    """'@scope/pkg@1.2.0' -> '@scope/pkg', 'pkg==1.0' -> 'pkg'. The version is not matched."""
     at = spec.rfind("@")
-    return spec[:at] if at > 0 else spec
+    if at > 0:
+        spec = spec[:at]
+    return re.split(r"[=<>!~\[;]", spec, maxsplit=1)[0].strip()
 
 
 def _package(entry: dict[str, Any]) -> tuple[str, str] | None:
+    """(registry type, package) for a local server, or None to block it.
+
+    Fails closed: docker (its run arguments are not parsed), a flag naming a second package,
+    or `--from` with a different command all give None.
+    """
     registry_type = _RUNNERS.get(str(entry.get("command", "")))
-    args = [a for a in entry.get("args", []) if isinstance(a, str) and not a.startswith("-")]
-    if registry_type is None or not args:
+    args = [a for a in entry.get("args", []) if isinstance(a, str)]
+    if registry_type is None or registry_type == "oci":
         return None
-    return registry_type, _strip_version(args[0])
+    if any(a.split("=", 1)[0] in _SECOND_PACKAGE_FLAGS for a in args):
+        return None
+    source: str | None = None
+    positional: list[str] = []
+    rest = iter(args)
+    for arg in rest:
+        if arg == "--from":
+            source = next(rest, "")
+        elif arg.startswith("--from="):
+            source = arg.split("=", 1)[1]
+        elif not arg.startswith("-"):
+            positional.append(arg)
+    if not positional:
+        return None
+    package = _strip_version(positional[0])
+    if source is not None and _strip_version(source) != package:
+        return None
+    return registry_type, package
 
 
 class RegistryUnusableError(Exception):
