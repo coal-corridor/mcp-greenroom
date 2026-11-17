@@ -94,6 +94,15 @@ def _source_allowed(package: dict[str, Any]) -> bool:
 
 
 def _check_sources(server: dict[str, Any]) -> None:
+    remotes = server.get("remotes") or []
+    if remotes:  # this slice vets packages only; a remote endpoint is not an allowed source
+        raise _refuse(
+            "validation.source_not_allowed",
+            "Package source is not allowed: the server lists remotes, which this registry "
+            "does not vet",
+            [r.get("url") for r in remotes if isinstance(r, dict)],
+            "Remove 'remotes' and submit the server as a package from an allowed registry.",
+        )
     packages = server.get("packages") or []
     todo = (
         f"Publish the package to an allowed registry ({', '.join(ALLOWED_SOURCES.values())}) "
