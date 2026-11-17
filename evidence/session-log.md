@@ -65,11 +65,11 @@ Integration and evidence overlap from 16:05 to 16:23. Count those 18 minutes onc
 | 15:59 | lead | Both messages fixed test first. Run 2 from a new fresh clone at `94dc6a4` confirmed them. One weak message left as is. | | `47f113a`, `295941b`, `94dc6a4`, `50fca42`, `f117754` |
 | 16:05 | user | `/security-review` over `main...integration`: no vulnerabilities reported. `/review-area` on `integration`: six findings and one point not verified. `/code-review` cut for time. | Brief 90, step 4. | `handoff/integration-review.md` |
 | 16:05 | lead | Evidence pass started in a second session on branch `evidence`, cut from `integration`, in auto mode. | The integration reviews were still running. | `briefs/95-evidence.md` |
-| 16:13 | lead (evidence) | Fresh clone at `f117754` green. Six evidence files written, one commit each, with `TODO(user)` where only the user knows the answer. | | `5bfcdc8` to `e06a453` |
+| 16:13 | lead (evidence) | Fresh clone at `f117754` green. Six evidence files written, one commit each, with open questions where only the user knows the answer. | | `5bfcdc8` to `e06a453` |
 | 16:14 | lead | Integration review decisions recorded. Fixed test first: every test folder clears the shell's settings, the main path test checks "by policy", a pipeline that cannot be built stops startup clearly. A lock on the shared scanner. | The user's decision on each finding. | `868faee`, `485c8b3`, `778aeb2`, `fb0260c`, `cd404d3`, `32004b2`, `6e5c5dd`, `6332a84` |
 | 16:23 | user | Pull request 5 (integration) merged. Run 44023747644 on `2b6ee66` green on all five jobs. | | `2b6ee66` |
 | 16:24 | lead (evidence) | `main` merged into `evidence`. Check script (436 passed) and demo re-run, `verify.md` and `agentic-workflow.md` updated with the integration review. | | `38c46d7`, `e0c7a10`, `19ac383` |
-| 16:35 | user | Answers to the `TODO(user)` questions, drafted with the steering chat from the record of the build and checked by the user. | | `evidence/agentic-workflow.md`, `evidence/decisions.md` |
+| 16:35 | user | Answers to the open questions, drafted with the steering chat from the record of the build and checked by the user. | | `evidence/agentic-workflow.md`, `evidence/decisions.md` |
 | 16:40 | lead (evidence) | The Stop hook blocked the turn: `test_untrusted_text_is_printed_inert` failed in the hook's 64-column shell, because the findings table wrapped inert text across two lines. CI, at a wider width, did not catch it. The user approved one test-only fix outside the brief: the CLI tests pin `COLUMNS=120`. | A test that depended on the width of the shell. | `a3ee25f` |
 
 ## Repeated mistake
