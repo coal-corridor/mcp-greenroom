@@ -32,13 +32,16 @@ def get_settings(request: Request) -> Settings:
     return settings
 
 
-def get_identity(authorization: Annotated[str | None, Header()] = None) -> Identity:
+def get_identity(
+    request: Request, authorization: Annotated[str | None, Header()] = None
+) -> Identity:
     """The caller, from the credential (bearer token), never from the request body.
 
     Unknown or missing token: 401. Dev stub tokens are in mcp_greenroom.config.DEV_IDENTITIES.
     """
     scheme, _, token = (authorization or "").partition(" ")
-    identity = DEV_IDENTITIES.get(token.strip()) if scheme.lower() == "bearer" else None
+    dev = get_settings(request).env == "dev"  # stub identities exist only in dev
+    identity = DEV_IDENTITIES.get(token.strip()) if dev and scheme.lower() == "bearer" else None
     if identity is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
