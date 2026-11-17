@@ -101,3 +101,42 @@ def test_the_schema_refusal_escapes_and_truncates_what_it_received() -> None:
 )
 def test_the_valid_samples_pass(slug: str) -> None:
     validate(load_sample(slug))
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {"registryType": "oci", "registryBaseUrl": "https://docker.io"},
+        {"registryType": "mcpb", "registryBaseUrl": "https://github.com"},
+        {"registryBaseUrl": "https://npm.mirror.example"},
+        {"registryBaseUrl": "http://registry.npmjs.org"},
+        {"registryType": "pypi", "registryBaseUrl": "https://registry.npmjs.org"},
+        {"identifier": "https://github.com/examplebank/releases/download/v1/pkg.tgz"},
+    ],
+)
+def test_a_package_from_a_source_not_allowed_is_refused(changes: dict[str, str]) -> None:
+    with pytest.raises(Refusal) as refused:
+        validate(with_package(**changes))
+    assert refused.value.rule_id == "validation.source_not_allowed"
+    assert refused.value.message.startswith("Package source is not allowed")
+
+
+@pytest.mark.parametrize("packages", [None, []])
+def test_a_server_with_no_package_is_refused_as_source_not_allowed(packages: object) -> None:
+    with pytest.raises(Refusal) as refused:
+        validate(with_server(packages=packages))
+    assert refused.value.rule_id == "validation.source_not_allowed"
+
+
+@pytest.mark.parametrize(
+    "changes",
+    [
+        {},
+        {"registryBaseUrl": None},
+        {"registryBaseUrl": "https://registry.npmjs.org/"},
+        {"registryType": "pypi", "registryBaseUrl": "https://pypi.org", "identifier": "eb-mcp"},
+        {"registryType": "pypi", "registryBaseUrl": None, "identifier": "eb-mcp"},
+    ],
+)
+def test_a_package_from_an_allowed_source_passes(changes: dict[str, str]) -> None:
+    validate(with_package(**changes))
