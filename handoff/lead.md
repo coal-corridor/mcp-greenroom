@@ -36,4 +36,4 @@ lint pass 0.7s, types pass 0.3s, test pass 0.7s (43 passed), eval skip 0.0s. Exi
 none
 
 ## Next step
-Read briefs/90-integrate.md once the first area PR is open, and review that PR with the reviewer agent.
+Read briefs/90-integrate.md once the first area PR is open, and review that PR with the reviewer agent. This note lives on the local branch lead/handoff (not pushed, by the user's choice). When `integration` is created from main, run `git merge lead/handoff` there to carry it in.
