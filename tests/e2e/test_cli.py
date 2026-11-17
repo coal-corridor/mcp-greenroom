@@ -62,3 +62,22 @@ def test_client_check_exit_code(
     assert result.exit_code == code, result.output
     assert line in result.stdout
     assert "simulat" in result.stdout.lower()
+
+
+@pytest.mark.parametrize(
+    "env",
+    [{}, {"NO_COLOR": "1", "FORCE_COLOR": "1"}],
+    ids=["piped", "no-color-on-a-terminal"],
+)
+def test_output_has_no_colour_when_piped_or_no_color(
+    monkeypatch: pytest.MonkeyPatch, env: dict[str, str]
+) -> None:
+    monkeypatch.setattr(cli, "TRANSPORT", _registry_listing("payments-readonly"))
+
+    result = runner.invoke(
+        app, ["client-check", str(AMP_CONFIG), "--api", "http://api.test"], env=env
+    )
+
+    assert "\x1b[3" not in result.stdout  # no foreground colour
+    assert "\x1b[4" not in result.stdout  # no background colour
+    assert "✗ blocked" in result.stdout  # the word carries the status, not the colour
