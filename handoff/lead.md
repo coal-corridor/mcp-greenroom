@@ -1,38 +1,50 @@
-# Handoff: lead on setup
+# Handoff: lead on lead/handoff
 
-State at commit f343f5d (2026-11-17). Uncommitted files: none. PR #1 (setup -> main) open.
+State at commit 2ca2349 (2026-11-17), the merge of PR #1 into main. Uncommitted files: none except this note.
 
 ## Goal
-Brief 00: check script, PR checks, guard rails (closed). Brief 10: shared shapes and seams written, tested, frozen; same PR.
+Briefs 00 (check script, PR checks, guard rails) and 10 (shared shapes and seams, frozen) are both closed. Next lead phase: brief 90, integration, once the area PRs land.
 
 ## Plan
-Brief 00 as approved: pyproject/lock, verify.sh, network guard, structure tests, ci.yml, Makefile.
-Brief 10, one commit each: contracts/, shared modules, seams, sample-data/servers, fakes under tests/, one shape test per shared module, CLAUDE.md paths.
+As approved: brief 00 items 1 to 6, then brief 10 items 1 to 7, in one setup PR. Corrections are under Decisions.
 
 ## Done
-- 86697af pyproject, uv.lock, .python-version, empty package.
-- 0be6efe scripts/verify.sh. 0e67edf network guard (tests/structure/test_network_guard.py). 9b3d50f + ffa1567 structure rules (tests/structure/test_source_rules.py).
-- b07f740 ci.yml, 40070b0 Makefile. CI run 44008340480 on PR #1: all five jobs green and named.
-- f343f5d contracts/: OpenAPI 2025-12-01 and server.schema.json 2025-12-11 pinned with sha256. Match the spec.
+- PR #1 merged as 2ca2349. CI run 44010204313 on 3e8f6e6: verify (quick|test|eval), secret scan and dependency audit all green.
+- Brief 00 tests: tests/structure/test_network_guard.py, tests/structure/test_source_rules.py.
+- contracts/: OpenAPI 2025-12-01 and server.schema.json 2025-12-11, pinned with sha256 (f343f5d).
+- Shared modules, each red then green, with tests in tests/shared/:
+  - config: test_config.py (2c75fb4)
+  - logging: test_logging.py (266530f)
+  - fingerprint: test_fingerprint.py (caae224)
+  - models (aa22957), interfaces.py and api/dependencies.py (8502a91)
+- sample-data/servers/: five samples plus an outcomes table (test_samples.py, 0eea3c2). Fakes: tests/fakes.py (test_fakes.py, 4dc232d).
+- CLAUDE.md line 24 names config.py and log_event (68cf5a3).
 
 ## Checks
-  lint   pass   types  pass   test   pass (17)   eval   skip   (exit 0, before f343f5d; quick green after it)
+  stage  result time
+  lint   pass   0.7s
+  types  pass   0.3s
+  test   pass   0.7s   (43 passed)
+  eval   skip   0.0s
+verify exit 0, on main at 2ca2349.
 
 ## Open
-1. Propose model names and fields plus seams. The user decides.
-2. Brief 10 items 2 to 7. 3. "contracts frozen", green checks, user merges PR #1.
+1. Wait for the area PRs (vetting, registry, edge). Review each against its spec with the reviewer agent.
+2. Brief 90 (integration), then brief 95 (evidence).
+3. When the repo goes public, the user makes verify (quick|test|eval) and secret scan required checks.
 
 ## Decisions and corrections
-- The repo is private, so required checks are off. The user merges on green by hand.
-- No baseline commit (main had 3 commits).
-- cisco-ai-mcp-scanner kept. litellm GHSA-g5ff-637f-6q2m and GHSA-7hp6-4w63-5g45 waived in [tool.uv.audit], recorded in evidence/decisions.md (user's choice).
-- Secret scan: pinned gitleaks 8.30.1 binary over full history, not the official action (that scans only the event's commits). Departs from delivery.md.
-- The user said: stop researching gitleaks, decide with what is known.
-- ruff 0.17 also formats Python code blocks in .md files, so lint covers docs.
-- Check verify.sh's own exit code before a commit (9b3d50f slipped through `| tail`).
+- The repo stays private for now. The user merges on green by hand.
+- litellm advisories waived in [tool.uv.audit] (fabf418). Secret scan runs the pinned gitleaks 8.30.1 binary, not the action. delivery.md updated and decisions.md has a record (a6b4466).
+- Env names follow .env.example (RISK_PROVIDER, MODEL). recordings_dir defaults to evals/recordings.
+- Contracts frozen on 2026-11-17 at 3e8f6e6. unrecorded-reporter is excluded from the recording run (vetting.md and the record-classifier skill).
+- The schema refuses `latest` only on packages[].version. Vetting needs its own rule for the top-level version.
+- Not checked by tooling: mypy does not cover tests/, so nothing checks that the fakes match the protocols.
+- The edge worktree was created at the same time as the others, not later as brief 10 suggested.
+- Check verify.sh's own exit code before every commit (9b3d50f slipped through `| tail`, fixed in ffa1567).
 
 ## Question at the impasse
-Model names and fields and the injection approach: waiting for the user.
+none
 
 ## Next step
-Write src/mcp_greenroom/models.py once the user approves the proposal.
+Read briefs/90-integrate.md once the first area PR is open, and review that PR with the reviewer agent.
