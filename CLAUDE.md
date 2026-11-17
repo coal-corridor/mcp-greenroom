@@ -21,7 +21,7 @@ A vetted registry for MCP servers, built as a thin slice. The contract is `docs/
 - Run the `handoff` skill when a plan is approved and when a phase closes.
 - Never amend, rebase, squash or force push. Fix mistakes with a new commit.
 - Commit messages: `type(scope): what changed`, then one line of why. Type is `test`, `feat`, `fix`, `docs`, `ci`, `chore` or `data`. Scope is your area (`vetting`, `registry`, `edge`) or, in the lead session, the phase (`setup`, `contracts`, `integration`, `evidence`). Example: `feat(vetting): reject hidden characters`.
-- One module reads environment variables. One logger. One wrapper for outbound calls.
+- Read environment variables only in `src/mcp_greenroom/config.py` (`tests/structure/` checks it). Log only through `log_event` in `src/mcp_greenroom/logging.py`. One wrapper for outbound calls.
 - An error leads with what failed, then what was received, then what to do.
 - Stay inside the folders your brief lists, plus your own note in `handoff/`. The user merges pull requests.
 - When you delegate to a subagent, give it one bounded job, its files by name (`docs/specs/mcp-greenroom.md`, at most one child spec, the paths to touch) and the shape of the answer: a short report with file and line, not full output.

@@ -15,7 +15,7 @@ Before:
 
 Run:
 
-4. `make record`. It sends every evaluation sample and every sample tool through the live provider and writes one recording per tool to `evals/recordings/`, with model id, prompt hash, token counts and time.
+4. `make record`. It sends every evaluation sample and every sample tool except those of `unrecorded-reporter` (which must stay unrecorded for the Abstain criterion) through the live provider and writes one recording per tool to `evals/recordings/`, with model id, prompt hash, token counts and time.
 5. `./scripts/verify.sh eval`.
 
 After:

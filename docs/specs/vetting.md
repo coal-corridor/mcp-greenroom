@@ -36,7 +36,8 @@ evaluation run and record the choice in `decisions.md`.
 submitted tool list. Do not copy its rule files into the repo. Show severity
 and threat names as the scanner gives them. Treat its output as untrusted text.
 - Recordings are produced once, during the build, by the live provider calling
-the Anthropic API over the evaluation set and the sample servers. The key sits
+the Anthropic API over the evaluation set and the sample servers, except
+`unrecorded-reporter`, which must stay unrecorded for the Abstain criterion. The key sits
 in the shell environment, is never in the repo and is not needed to run or
 check the slice. The live provider speaks the Anthropic Messages API over
 httpx, so no SDK is added. Its base URL, model and key variable are
