@@ -70,3 +70,16 @@ def test_submit_exit_code_and_status_word_per_outcome(
     assert (
         json.loads((SAMPLES / f"{sample}.json").read_text())["server"]["version"] in result.stdout
     )
+
+
+@pytest.mark.parametrize("sample", ["payments-readonly", "poisoned-notes"])
+def test_submit_json_prints_the_api_body_and_nothing_else(
+    monkeypatch: pytest.MonkeyPatch, sample: str
+) -> None:
+    body = result_body(sample)
+    monkeypatch.setattr(cli, "TRANSPORT", api_answering(201, body))
+
+    result = submit(sample, "--json")
+
+    assert json.loads(result.stdout) == body
+    assert result.exit_code == {"payments-readonly": 0, "poisoned-notes": 20}[sample]
