@@ -6,7 +6,7 @@ Sections 1 and 2 were written before the timed build and are completed here. Sec
 
 | Tool | Used for |
 | --- | --- |
-| Claude Code (CLI) | Primary implementation tool: all code, tests, scripts and the evidence pack. Four sessions, lead, vetting, registry and edge, each on Opus 5.5 in its own git worktree. Effort: lead high, vetting high, registry medium, edge `TODO(user)`: which effort did the edge session use? Permission mode: plan mode until each plan was approved, then accept edits in the lead session (13:48), auto mode from about 14:19. The area sessions ran in auto mode from plan approval |
+| Claude Code (CLI) | Primary implementation tool: all code, tests, scripts and the evidence pack. Four sessions, lead, vetting, registry and edge, each on Opus 5.5 in its own git worktree. Effort: lead high, vetting high, registry medium, edge medium. Permission mode: plan mode until each plan was approved, then accept edits in the lead session (13:48), auto mode from about 14:19. The area sessions ran in auto mode from plan approval |
 | Claude (chat) | Preparation: study notes, idea selection, intent, spec, README overview, roadmap, this skeleton. During the build: one session used throughout for prompt wording, permission prompts and review triage |
 | GitHub Spec Kit, driven from Claude Code | Preparation only: one idea assessment pass (intake, research, problem, concept) |
 | Anthropic API, through the slice's live provider | The two classifier recording runs only, behind `make record` (an ask rule). Run 1 on `claude-opus-5-5` (`827782a`), run 2 on `claude-haiku-5-5` (`66567b5`), which is the one in the tree. Each sent 61,891 input tokens; output was 2,873 and 6,432 tokens (`handoff/vetting.md`) |
@@ -33,10 +33,9 @@ The plan also named the built-in `/code-review` and `/security-review` for integ
 | The seven project skills and the reviewer agent definition | Claude chat | Yes, under `.claude/` |
 | `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json` with three hook scripts, the briefs and the headings of the remaining evidence files | Claude chat | Yes |
 | The planned prompt for each phase and the steering rules for the user | Claude chat | Not in the tree. The prompts actually sent are in section 4 |
-| `TODO(user)`: `pyproject.toml` (`86697af`, 13:58), the check script (`0be6efe`, 14:00) and the CI workflow (`b07f740`, 14:08) were committed inside the timebox. Were any of them copied from a template prepared in advance? If not, delete this row | | |
 | Build environment: WSL 2 with Ubuntu 24.04, toolchain checked by a probe script, a trimmed Claude Code profile | By hand and with Claude Code | No |
 
-No practice pass was run. The tree at `0b4ecd9`, the head of `main` when the build started at 13:38, holds no file under `src/`, `tests/`, `sample-data/`, `evals/` or `scripts/`. The first package code was committed at 13:58 (`86697af`), the sample servers at 14:22 (`0eea3c2`) and the first classifier recordings at 15:11 (`827782a`). The full-history secret scan finds no leak in 224 commits (`verify.md`). There were no earlier attempts at building. The API key for the recording run was created and tested with one call before 13:38, and was never committed.
+No practice pass was run. The tree at `0b4ecd9`, the head of `main` when the build started at 13:38, holds no file under `src/`, `tests/`, `sample-data/`, `evals/` or `scripts/`. The first package code was committed at 13:58 (`86697af`), the sample servers at 14:22 (`0eea3c2`) and the first classifier recordings at 15:11 (`827782a`). The full-history secret scan finds no leak in 224 commits (`verify.md`). Templates for `pyproject.toml`, `scripts/verify.sh` and `ci.yml` had been prepared outside the repo and were not used: the lead session wrote these files during setup (`86697af`, `0be6efe`, `b07f740`). There were no earlier attempts at building. The API key for the recording run was created and tested with one call before 13:38, and was never committed.
 
 ## 3. How the work was decomposed
 
@@ -59,16 +58,17 @@ Decided in advance, and what changed:
 
 Standing instructions live in `CLAUDE.md` and in the spec ("stop and ask" at the edges of scope). One standing instruction was added during the build, at 14:41: work the brief without checking in after each behaviour, and commit each green route.
 
-`TODO(user)`: two or three prompts exactly as sent, each with the commit it led to. The prompt for this evidence pass is below, as sent; keep it or replace it.
+Three prompts as sent. `[...]` marks where a long prompt is cut.
 
 | Prompt as sent | Step | Resulting commit |
 | --- | --- | --- |
-| "Read briefs/95-evidence.md and follow it with the write-evidence skill. You are on branch evidence, cut from integration, while the lead session finishes the integration reviews. Run uv sync first. [...] Order: verify.md, operate.md, design.md, README.md (the Setup section first, it is still a placeholder), agentic-workflow.md, then the factual parts of decisions.md. [...] Where only I know the answer, leave TODO(user) with the question and list those at the end. Do not guess, and do not write trade-offs in my voice. One commit per file. Do not check in between files." | Evidence | `5bfcdc8` to this file's commit |
-| `TODO(user)` | | |
+| "Read `docs/specs/mcp-greenroom.md`, `docs/specs/delivery.md` and `briefs/00-setup.md`. Tell me in ten lines or fewer what you will do, and list anything that looks wrong or contradictory. Do not write code until I say go. Note: the GitHub repo is private for now, so required checks cannot be switched on yet; I merge only on green by hand and will switch them on when the repo goes public, so do not treat that as a blocker." | 13:38, lead, opening | The setup commits, `86697af` onward |
+| "Two corrections, the rest is approved. (1) `main` already has three commits, all pushed: confirm with `git log --oneline -5` and `git status`. Skip the baseline commit and create branch `setup` from `main`. If `git log` shows no commits, stop and tell me. (2) If `cisco-ai-mcp-scanner` does not resolve or install cleanly, leave it out of `pyproject.toml` and tell me. Do not debug it in this phase." | 13:44, lead, correction to the first plan | The revised plan, no commit (head `0b4ecd9`) |
+| "None of the three yet. First the cheapest test, with no code change: 1. Commit the 47 Opus recordings as they are, in one commit [...] 2. Re-record with the shell's default model, claude-haiku-5-5: plain make record, no override. I will approve the prompt. 3. Run ./scripts/verify.sh eval and show me the table. [...]" | 15:11, vetting, after the Opus refusals | `827782a`, `66567b5` |
 
 ## 5. Where I intervened
 
-Drafted from `evidence/session-log.md`. `TODO(user)`: check each row, and add any `Esc`, rewind, `/clear` or restart, none of which is in the log.
+Drafted from `evidence/session-log.md` and confirmed by me as drafted. There was no `Esc`, rewind, `/clear` or restart beyond what the table lists.
 
 | Time | What the agent did or proposed | What I changed, and why | Trace |
 | --- | --- | --- | --- |
