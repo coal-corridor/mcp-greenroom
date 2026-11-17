@@ -9,6 +9,12 @@ It provides an in-house intake and risk review for MCP servers, and publishes th
 
 An MCP server gives a coding agent new tools, and the agent reads each tool's description as instructions. A poisoned description is an attack path. A regulated enterprise must be able to control what MCP servers are available for the developers via a curated registry, with a submission approval process, evidence, and policy.
 
+## Technology stack
+
+- **Python 3.12, uv** 
+- **FastAPI, uvicorn, Pydantic v2** 
+- **SQLAlchemy 2 on SQLite.**
+- **Cisco AI MCP Scanner 4.8.7 (YARA engine)**
 
 ## How it works
 ![alt text](system-diagram.png)
