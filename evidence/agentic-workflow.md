@@ -1,6 +1,6 @@
 # Agentic workflow: MCP Greenroom
 
-Sections 1 and 2 were written before the timed build and are completed here. Sections 3 to 7 were rewritten after it, from `evidence/session-log.md`, the handoff notes and review reports in `handoff/`, and the git history. All times are local (Sydney), 17 Nov 2026. Nothing in this file may describe a result that was not produced.
+Sections 1 and 2 were written before the timed build and are completed here. Sections 3 to 7 were rewritten after it, from `evidence/session-log.md`, the handoff notes and review reports in `handoff/`, and the git history. All times are local (Sydney), 17 Nov 2026. Nothing in this file may describe a result that was not produced. My answers to the questions left open by the first draft (sections 1, 2 and 6, and the timeline) were drafted with the steering chat from the record of the build and checked by me.
 
 ## 1. Tools
 
@@ -18,7 +18,7 @@ The harness is committed in the repo, so the panel can read what steered the age
 - `.claude/agents/`: one read-only reviewer subagent.
 - `.claude/skills/`: seven project skills. Claude starts `verify-change`, `tdd-behaviour`, `write-evidence` and `handoff`. I start `/review-area`, `/open-area-pr` and `/record-classifier`, because they review, push or call a model.
 
-The plan also named the built-in `/code-review` and `/security-review` for integration, and the `claude-api` skill for the live provider. The user ran `/security-review` on `integration` at 16:05; `/code-review` was not run, cut for time by the user (`handoff/integration-review.md`). `TODO(user)`: was the `claude-api` skill used? Was any other skill or plugin enabled? Please paste the plugin list and the "Setting sources" line from `/status`.
+The plan also named the built-in `/code-review` and `/security-review` for integration, and the `claude-api` skill for the live provider. The user ran `/security-review` on `integration` at 16:05; `/code-review` was not run, cut for time by the user (`handoff/integration-review.md`). There is no sign that the `claude-api` skill was used: neither `handoff/vetting.md` nor any commit message mentions it, and the live provider speaks the Messages API over httpx with no SDK, as `vetting.md` asks. `/status` was not captured during the build, so only this can be checked: the user settings file (`~/.claude/settings.json`) sets `syncClaudeAiSkills: false`, `syncClaudeAiPlugins: false` and `disableClaudeAiConnectors: true`, and no plugin was installed. The only skills beside Claude Code's built-in ones were the seven in this repo.
 
 ## 2. Prepared in advance
 
@@ -36,7 +36,7 @@ The plan also named the built-in `/code-review` and `/security-review` for integ
 | `TODO(user)`: `pyproject.toml` (`86697af`, 13:58), the check script (`0be6efe`, 14:00) and the CI workflow (`b07f740`, 14:08) were committed inside the timebox. Were any of them copied from a template prepared in advance? If not, delete this row | | |
 | Build environment: WSL 2 with Ubuntu 24.04, toolchain checked by a probe script, a trimmed Claude Code profile | By hand and with Claude Code | No |
 
-No practice pass was run. The tree at `0b4ecd9`, the head of `main` when the build started at 13:38, holds no file under `src/`, `tests/`, `sample-data/`, `evals/` or `scripts/`. The first package code was committed at 13:58 (`86697af`), the sample servers at 14:22 (`0eea3c2`) and the first classifier recordings at 15:11 (`827782a`). The full-history secret scan finds no leak in 224 commits (`verify.md`). `TODO(user)`: confirm that nothing else (code, tests, samples, recordings) existed outside the repo before 13:38, and that the API key for the recording run was set in the shell before the timebox.
+No practice pass was run. The tree at `0b4ecd9`, the head of `main` when the build started at 13:38, holds no file under `src/`, `tests/`, `sample-data/`, `evals/` or `scripts/`. The first package code was committed at 13:58 (`86697af`), the sample servers at 14:22 (`0eea3c2`) and the first classifier recordings at 15:11 (`827782a`). The full-history secret scan finds no leak in 224 commits (`verify.md`). There were no earlier attempts at building. The API key for the recording run was created and tested with one call before 13:38, and was never committed.
 
 ## 3. How the work was decomposed
 
@@ -94,7 +94,7 @@ What happened.
 
 - **Enforced.** The `Stop` hook ran lint, types and tests at the end of each agent turn; a second stop in a row passes with a warning. CI ran five jobs on every pull request and push to `main`. Deny and ask rules held throughout. Auto mode's safety check blocked one command at 15:39, which wrote a config file and downloaded the gitleaks binary in one step. Not enforced: no check is marked required, because the repository is private.
 - **Reported, not enforced.** The dependency audit: no finding after the two waivers.
-- **By me.** I merged all four pull requests by hand, on green, and decided every review finding. `TODO(user)`: which diffs and commit messages did you read line by line before merging?
+- **By me.** I merged all five pull requests by hand, on green, and decided every review finding. I read most diffs and commit messages line by line during the build. The merges relied on green checks, the independent reviewer's reports and my decision on each finding.
 - **Independent.** The reviewer subagent, once per area and once on `integration`, started with `/review-area`, given the parent spec, the child spec and the diff. Areas: 37 findings, 6 High, all High fixed. Integration: 6 findings, none High, and one point it could not verify (scanner thread safety). The built-in `/security-review` over `main...integration` reported no vulnerabilities; no finding reached its 80% confidence bar. `/code-review` was not run. Counts and decisions are in `verify.md`.
 - **Caught late.** A command chain that hid the exit code let a failing check be committed in three sessions: lead (`9b3d50f`, fixed in `ffa1567`), vetting (two tier commits, fixed in `22da938`) and edge (`3c735e5`, fixed in `f6e0bd5`). The next check caught each one after the commit, not before.
 - **Caught by tests and CI.** A unit test caught a provider answering for the wrong tool, which led to approval (`9e460f6`). CI caught a difference the local run missed: Typer forces colour in `--help` under `GITHUB_ACTIONS` (`500774a`).
@@ -129,8 +129,8 @@ From the time ledger in `session-log.md`. One sitting. No phase was replayed.
 | Frame and contracts | 0:00 to 0:20 | 13:38 | 14:27 | 49 minutes: setup 30, contracts 19 |
 | Merge of pull request 1, worktrees, area plans | | 14:27 | 14:35 | 8 minutes |
 | Build | 0:20 to 1:50 | 14:35 | 15:45 | 70 minutes, three sessions in parallel |
-| Integrate and review | 1:50 to 2:25 | 15:46 | `TODO(user)` | Break test fixes by 16:00 (`f117754`), review fixes by 16:18 (`b6a8acc`), pull request 5 merged at 16:23. Overlapped with the evidence pass |
-| Evidence | 2:25 to 2:55 | `TODO(user)` | | First evidence commit at 16:13 |
-| Clean clone | 2:55 to 3:00 | | | Two fresh clones, 16:09 and after 16:17 |
+| Integrate and review | 1:50 to 2:25 | 15:46 | 16:23 | Break test fixes by 16:00 (`f117754`), review fixes by 16:18 (`b6a8acc`), pull request 5 merged at 16:23. Overlapped with the evidence pass |
+| Evidence | 2:25 to 2:55 | 16:05 | Open until its pull request merges | A second lead session, in auto mode. First evidence commit at 16:13 |
+| Clean clone | 2:55 to 3:00 | | | Fresh clones at 16:09 and after 16:17, and one on the merged state (`verify.md`) |
 
-Building time to 15:45: 127 minutes. `TODO(user)`: total building time across all phases, and when the evidence phase started and ended.
+Building time: 127 minutes to 15:45, and 164 to 16:23 when integration ended. Integration and evidence overlap from 16:05 to 16:23, counted once. The evidence pass after 16:23 adds to this until its pull request merges.
