@@ -70,6 +70,7 @@ Integration and evidence overlap from 16:05 to 16:23. Count those 18 minutes onc
 | 16:23 | user | Pull request 5 (integration) merged. Run 44023747644 on `2b6ee66` green on all five jobs. | | `2b6ee66` |
 | 16:24 | lead (evidence) | `main` merged into `evidence`. Check script (436 passed) and demo re-run, `verify.md` and `agentic-workflow.md` updated with the integration review. | | `38c46d7`, `e0c7a10`, `19ac383` |
 | 16:35 | user | Answers to the `TODO(user)` questions, drafted with the steering chat from the record of the build and checked by the user. | | `evidence/agentic-workflow.md`, `evidence/decisions.md` |
+| 16:40 | lead (evidence) | The Stop hook blocked the turn: `test_untrusted_text_is_printed_inert` failed in the hook's 64-column shell, because the findings table wrapped inert text across two lines. CI, at a wider width, did not catch it. The user approved one test-only fix outside the brief: the CLI tests pin `COLUMNS=120`. | A test that depended on the width of the shell. | `a3ee25f` |
 
 ## Repeated mistake
 
