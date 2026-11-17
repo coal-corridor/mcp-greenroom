@@ -212,6 +212,33 @@ def review(
     raise typer.Exit(EXIT_OK)
 
 
+@app.command()
+def audit(
+    submission_id: IdArgument,
+    api: ApiOption = None,
+    token: TokenOption = None,
+    as_json: JsonOption = False,
+) -> None:
+    """List the audit records of a submission, oldest first.
+
+    Example: mcp-greenroom audit 3f2c9a1e-...
+    """
+    path = f"/submissions/{quote(submission_id, safe='')}/audit"
+    body = _call("GET", path, api, token, as_json)
+    if as_json:
+        raise typer.Exit(EXIT_OK)
+    out = stdout_console()
+    for event in body.get("events") or []:
+        fields = ("at", "actor", "action")
+        line = Text("  ").join(inert(event.get(key)) for key in fields)
+        line.append("  policy ").append(inert(event.get("policy_version")))
+        out.print(line)
+        for reason in event.get("reasons") or []:
+            out.print(Text("    ").append(inert(f"{reason.get('code')}: {reason.get('message')}")))
+    next_step(f"{NAME} status {submission_id}")
+    raise typer.Exit(EXIT_OK)
+
+
 @app.command("client-check")
 def client_check(
     config: Annotated[Path, typer.Argument(help="Client config file (Amp settings shape).")],
