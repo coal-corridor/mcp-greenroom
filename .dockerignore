@@ -1,0 +1,18 @@
+# Build context for the Dockerfile. The image copies only named paths; this keeps the rest
+# (history, the local environment, secrets, caches and local state) out of the context.
+
+.git
+.venv
+.env
+.env.local
+
+# Caches
+**/__pycache__
+**/*.py[cod]
+.mypy_cache
+.ruff_cache
+.pytest_cache
+
+# Local state
+**/*.db
+snapshots/
