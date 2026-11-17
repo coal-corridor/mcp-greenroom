@@ -1,6 +1,6 @@
 # Handoff: vetting on area/vetting
 
-State at commit 2ca2349 (2026-11-17). Uncommitted files: none.
+State at commit bdb6f26 (2026-11-17). Uncommitted files: none.
 
 ## Goal
 Given a submission, the pipeline returns the outcome the decision order demands, with evidence, for every sample and every evaluation case.
@@ -13,30 +13,33 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 5. About 40 labelled cases in `evals/dataset*`, `evals/run_eval.py` gate and report with scanner column, sample-outcome table test. User records, then full verify and report for `evidence/verify.md`.
 
 ## Done
-- `uv sync` and `./scripts/verify.sh quick` run in this worktree: green.
-- Found: fingerprint stability under reordering already exists in contracts (`tests/shared/test_fingerprint.py`, commit caae224).
+- Spike (item 1): done, result under Decisions.
+- Step 1 validation (`vetting/validation.py`, `validate()` raises Refusal), red/green each: `validation.version_not_pinned`, `validation.schema`, `validation.source_not_allowed`, `validation.no_tools`. Tests: `tests/unit/test_validation.py`.
+- Step 2 rule (`vetting/rules.py`, `hidden_characters()` -> `rule.hidden_characters` findings). Tests: `tests/unit/test_rules.py`.
+- Fingerprint under reordering: already covered by `tests/shared/test_fingerprint.py` (caae224); not duplicated.
 
 ## Checks
 ```
   stage  result time
   lint   pass   0.1s
-  types  pass   0.2s
-  test   pass   1.2s
+  types  pass   0.3s
+  test   pass   0.9s
   eval   skip   0.0s
 ```
 
 ## Open
-Plan items 2 to 5, then the scanner adapter and config change (moved to the end).
+Plan items 3 (decision order), 4 (prompt, replay, live, recorder), 5 (evals and gate), then the scanner adapter and config change.
 
 ## Decisions and corrections
 - User approved the five-line plan.
 - Spike (14:36): scanner fits. Parseable, benign clean, poisoned-notes/search_notes 2 HIGH, <1 ms/scan, 2.5 s import. Import loads litellm, which fetches a remote cost map: 8 connect attempts; `LITELLM_LOCAL_MODEL_COST_MAP=True` stops them.
 - User: set that var in `config.py` with `os.environ.setdefault`, own commit, with a test that importing the adapter makes no connection. Approved change to the frozen module, this branch only.
 - User: leave `pyproject.toml`; the lead pins ==4.8.7 at integration.
+- Own call, to confirm: allowed sources are a constant in `validation.py` (npm registry.npmjs.org, PyPI pypi.org, by name); no package -> refused. Version check runs before schema so invalid-unpinned gets `version_not_pinned`.
 - User: scanner adapter and the config change come LAST, after the eval gate. Until then use a no-findings scanner on the seam. Adapter is first to cut.
 
 ## Question at the impasse
 none
 
 ## Next step
-Validation rules, red/green each, starting in `tests/unit/`.
+Decision order step by step, red/green, in `tests/unit/test_decision_order.py` and `vetting/pipeline.py`.
