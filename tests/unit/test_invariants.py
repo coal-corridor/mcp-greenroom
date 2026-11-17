@@ -124,3 +124,40 @@ def test_an_unexpected_error_inside_vetting_becomes_human_review(
     assert decision.outcome is Outcome.HUMAN_REVIEW
     assert [r.code for r in decision.reasons] == ["vetting.internal_error"]
     assert decision.policy_version == POLICY.policy_version
+
+
+def _events(caplog: pytest.LogCaptureFixture) -> list[dict]:
+    import json
+
+    return [json.loads(r.getMessage()) for r in caplog.records if r.name == "mcp_greenroom"]
+
+
+def test_a_classifier_failure_is_logged_with_its_message_and_no_raw_tool_name(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    import logging
+
+    from mcp_greenroom.interfaces import ClassifierUnavailable
+
+    class Down:
+        def classify(self, tool: Tool) -> object:
+            raise ClassifierUnavailable("Classifier call failed: HTTP 401. Check the key.")
+
+    caplog.set_level(logging.INFO, logger="mcp_greenroom")
+    VettingPipeline(Down(), FakeScanner(), POLICY).vet(PAYMENTS)  # type: ignore[arg-type]
+    failed = [e for e in _events(caplog) if e["event"] == "vetting.classifier_failed"]
+    assert len(failed) == 2
+    assert failed[0]["error"] == "ClassifierUnavailable"
+    assert "HTTP 401" in failed[0]["detail"]
+    assert failed[0]["tool_name"]["sha256"]
+
+
+def test_a_scanner_failure_is_logged_with_its_message(caplog: pytest.LogCaptureFixture) -> None:
+    import logging
+
+    caplog.set_level(logging.INFO, logger="mcp_greenroom")
+    VettingPipeline(FakeProvider(low_results(PAYMENTS)), BrokenScanner(), POLICY).vet(PAYMENTS)
+    failed = [e for e in _events(caplog) if e["event"] == "vetting.scanner_failed"]
+    assert len(failed) == 1
+    assert failed[0]["error"] == "ScannerError"
+    assert "unreadable" in failed[0]["detail"]
