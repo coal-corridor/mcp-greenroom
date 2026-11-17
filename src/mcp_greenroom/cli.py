@@ -1,7 +1,8 @@
 """The mcp-greenroom command. Talks to the API over HTTP only."""
 
+import json
 from pathlib import Path
-from typing import Annotated, NoReturn
+from typing import Annotated, Any, NoReturn
 
 import httpx
 import typer
@@ -32,6 +33,13 @@ EXIT_REJECTED = 20
 
 # Tests swap in an httpx.MockTransport here. None means a real connection.
 TRANSPORT: httpx.BaseTransport | None = None
+
+# Outcome -> (symbol and word, colour that only repeats it, exit code).
+OUTCOMES = {
+    "approved": ("✓ approved", "green", EXIT_OK),
+    "human_review": ("! needs review", "yellow", EXIT_REVIEW),
+    "rejected": ("✗ rejected", "red", EXIT_REJECTED),
+}
 TIMEOUT_SECONDS = 10.0
 
 app = typer.Typer(add_completion=False, no_args_is_help=False)
@@ -94,6 +102,86 @@ def main(ctx: typer.Context) -> None:
         table.add_row(f"  {NAME} {usage}", summary)
     out.print(table)
     out.print(f"[dim]Next: {NAME} --help, or {NAME} COMMAND --help[/dim]")
+
+
+def _show_decision(body: dict[str, Any]) -> int:
+    """Print a submission's decision. Returns the exit code for its outcome."""
+    word, colour, code = OUTCOMES.get(str(body.get("outcome")), ("? unknown", "", EXIT_FAILURE))
+    tier = body.get("tier") or "none"
+    out = _out()
+    out.print(
+        Text.assemble(
+            (word, colour),
+            "  ",
+            str(body.get("name")),
+            " ",
+            str(body.get("version")),
+            f"  tier {tier}",
+        )
+    )
+    for reason in body.get("reasons") or []:
+        out.print(Text(f"  {reason.get('code')}: {reason.get('message')}"))
+    _next(f"{NAME} status {body.get('submission_id')}")
+    return code
+
+
+def _call(method: str, path: str, api: str | None, token: str | None, **kwargs: Any) -> Any:
+    """Send one request. Returns the JSON body of a 2xx answer, or exits with a clear error."""
+    with _client(api, token) as client:
+        try:
+            response = client.request(method, path, **kwargs)
+        except httpx.HTTPError as exc:
+            _fail(
+                f"The API is unreachable ({type(exc).__name__}).",
+                f"{method} {client.base_url.join(path)}",
+                "Start it with 'make run', or pass the right address with --api.",
+            )
+    if response.is_success:
+        return response.json()
+    _fail_from(response)
+
+
+def _fail_from(response: httpx.Response) -> NoReturn:
+    status = response.status_code
+    try:
+        detail = response.json().get("detail")
+    except ValueError:
+        detail = None
+    rule = detail.get("rule_id") if isinstance(detail, dict) else None
+    message = detail.get("message") if isinstance(detail, dict) else None
+    what = f"HTTP {status}" + (f" [{rule}]" if rule else "") + (f": {message}" if message else "")
+    if status == 401:
+        _fail(what, "a missing or unknown token", "Pass --token or set MCP_GREENROOM_TOKEN.")
+    if status in (403, 409, 422):
+        todo = {
+            403: "Ask a different reviewer: a reviewer is never the submitter.",
+            409: "This name and version already has a decision. Submit a new version.",
+            422: "Fix the file as the rule says, then submit again.",
+        }[status]
+        _fail(what, f"refused by the API ({status})", todo, EXIT_REJECTED)
+    _fail(what, f"HTTP {status} from the API", "Check the API log, then try again.")
+
+
+@app.command()
+def submit(
+    file: Annotated[Path, typer.Argument(help="Submission file: server.json and tools.")],
+    api: ApiOption = None,
+    token: TokenOption = None,
+) -> None:
+    """Send one server version for vetting.
+
+    Example: mcp-greenroom submit sample-data/servers/payments-readonly.json
+    """
+    try:
+        payload = json.loads(file.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        _fail(
+            "Could not read the submission file.",
+            f"{file} ({type(exc).__name__})",
+            "Pass a JSON file with 'server' and 'tools'.",
+        )
+    body = _call("POST", "/submissions", api, token, json=payload)
+    raise typer.Exit(_show_decision(body))
 
 
 @app.command("client-check")
