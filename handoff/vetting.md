@@ -30,7 +30,7 @@ Plan items 3 (decision order), 4 (prompt, replay, live, recorder), 5 (evals and 
 ## Decisions and corrections
 - User approved the five-line plan. Spike (14:36): scanner fits. Parseable, benign clean, poisoned-notes/search_notes 2 HIGH, <1 ms/scan, 2.5 s import. Import loads litellm, which fetches a remote cost map: 8 connect attempts; `LITELLM_LOCAL_MODEL_COST_MAP=True` stops them.
 - User: set that var in `config.py` with `os.environ.setdefault`, own commit, with a test that importing the adapter makes no connection. Approved change to the frozen module, this branch only. Leave `pyproject.toml`; the lead pins ==4.8.7 at integration.
-- Own call, to confirm: allowed sources are a constant in `validation.py` (npm registry.npmjs.org, PyPI pypi.org, by name); no package -> refused. Version check runs before schema so invalid-unpinned gets `version_not_pinned`.
+- User: strict allowed sources kept as `ALLOWED_SOURCES` in `vetting/policy.py`, pinned to policy version 2026-11-17.1; config.py unchanged. For the lead: roadmap "allowed sources as a setting".
 - User: scanner adapter and the config change come LAST, after the eval gate. Until then use a no-findings scanner on the seam. Adapter is first to cut.
 
 ## Question at the impasse

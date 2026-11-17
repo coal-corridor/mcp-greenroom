@@ -15,16 +15,10 @@ from jsonschema.exceptions import best_match
 
 from mcp_greenroom.interfaces import Refusal
 from mcp_greenroom.models import Submission, Tool
+from mcp_greenroom.vetting.policy import ALLOWED_SOURCES
 
 MAX_RECEIVED = 80
 SCHEMA_PATH = Path(__file__).resolve().parents[3] / "contracts" / "server.schema.json"
-
-# Allowed package sources: registry type -> its one allowed base URL. A package without
-# registryBaseUrl comes from the type's public registry. Anything else is refused.
-ALLOWED_SOURCES: dict[str, str] = {
-    "npm": "https://registry.npmjs.org",
-    "pypi": "https://pypi.org",
-}
 
 # One exact version: digits first (an optional "v"), dot-separated numbers, then an optional
 # pre-release or build suffix. Refuses tags ("latest", "next"), ranges and wildcards.
