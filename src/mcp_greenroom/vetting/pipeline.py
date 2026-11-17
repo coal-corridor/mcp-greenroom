@@ -70,6 +70,8 @@ class VettingPipeline:
         return self._decide(submission.tools)
 
     def _decide(self, tools: Sequence[Tool]) -> Decision:
+        scanned, scanner_failed = self._scan(tools)
+
         # Step 2. Hidden characters in a name or description: rejected.
         hidden = hidden_characters(tools)
         if hidden:
@@ -135,6 +137,22 @@ class VettingPipeline:
             ]
             return self._decision(Outcome.HUMAN_REVIEW, tier, reasons, [], risks)
 
+        # Step 6. A scanner rule matched on any tool: human review. A failed scan counts.
+        if scanned or scanner_failed:
+            reasons = [
+                Reason(
+                    code="scanner.match",
+                    message="A scanner rule matched this tool.",
+                    tool_name=name,
+                )
+                for name in dict.fromkeys(f.tool_name for f in scanned)
+            ]
+            if scanner_failed:
+                reasons.append(
+                    Reason(code="scanner.unavailable", message="The scanner could not run.")
+                )
+            return self._decision(Outcome.HUMAN_REVIEW, tier, reasons, scanned, risks)
+
         return self._decision(
             Outcome.HUMAN_REVIEW,
             tier,
@@ -142,6 +160,13 @@ class VettingPipeline:
             [],
             risks,
         )
+
+    def _scan(self, tools: Sequence[Tool]) -> tuple[list[Finding], bool]:
+        """Scanner findings, and whether the scan failed. Evidence only."""
+        try:
+            return list(self.scanner.scan(tools)), False
+        except Exception:  # ScannerError, or anything else: fail closed
+            return [], True
 
     def _classify(self, tools: Sequence[Tool]) -> tuple[list[RiskResult], list[Reason]]:
         """Score every tool. A failure is a reason, never a guessed result."""
