@@ -6,6 +6,7 @@ Untrusted text (tool names, descriptions, evidence, notes) goes through inert() 
 import unicodedata
 from typing import Any, NoReturn
 
+import httpx
 import typer
 from rich import box
 from rich.console import Console
@@ -106,3 +107,36 @@ def show_decision(body: dict[str, Any]) -> int:
         show_findings(out, findings)
     next_step(f"{NAME} status {body.get('submission_id')}")
     return code
+
+
+def error_body(response: httpx.Response) -> dict[str, Any]:
+    """The API's error body: rule_id and message at the top level (or under FastAPI's detail)."""
+    try:
+        body = response.json()
+    except ValueError:
+        return {}
+    if isinstance(body, dict) and isinstance(body.get("detail"), dict):
+        body = body["detail"]
+    return body if isinstance(body, dict) else {}
+
+
+def fail_from(response: httpx.Response) -> NoReturn:
+    status = response.status_code
+    body = error_body(response)
+    rule, message = body.get("rule_id"), body.get("message")
+    what = f"HTTP {status}" + (f" [{rule}]" if rule else "") + (f": {message}" if message else "")
+    received = str(body["received"]) if body.get("received") else None
+    if status == 401:
+        fail(
+            what,
+            received or "a missing or unknown token",
+            "Pass --token, or set MCP_GREENROOM_TOKEN.",
+        )
+    if status in (403, 409, 422):
+        todo = {
+            403: "Ask a different reviewer: a reviewer is never the submitter.",
+            409: "This name and version is already decided. Submit a new version.",
+            422: "Fix the request as the message says, then send it again.",
+        }[status]
+        fail(what, received or f"refused by the API ({status})", todo, EXIT_REJECTED)
+    fail(what, received or f"HTTP {status} from the API", "Check the API log, then try again.")

@@ -3,7 +3,7 @@
 import json
 import sys
 from pathlib import Path
-from typing import Annotated, Any, NoReturn
+from typing import Annotated, Any
 from urllib.parse import quote
 
 import httpx
@@ -18,6 +18,7 @@ from mcp_greenroom.cli_output import (
     NAME,
     exit_code,
     fail,
+    fail_from,
     inert,
     next_step,
     show_decision,
@@ -107,7 +108,7 @@ def _send(method: str, path: str, api: str | None, token: str | None, **kwargs: 
 def _json(response: httpx.Response) -> Any:
     """The JSON body of a 2xx answer, or exit with the API's error."""
     if not response.is_success:
-        _fail_from(response)
+        fail_from(response)
     try:
         return response.json()
     except ValueError:
@@ -123,39 +124,6 @@ def _call(
     if as_json and response.content:
         sys.stdout.write(response.text.rstrip("\n") + "\n")
     return _json(response)
-
-
-def _error_body(response: httpx.Response) -> dict[str, Any]:
-    """The API's error body: rule_id and message at the top level (or under FastAPI's detail)."""
-    try:
-        body = response.json()
-    except ValueError:
-        return {}
-    if isinstance(body, dict) and isinstance(body.get("detail"), dict):
-        body = body["detail"]
-    return body if isinstance(body, dict) else {}
-
-
-def _fail_from(response: httpx.Response) -> NoReturn:
-    status = response.status_code
-    body = _error_body(response)
-    rule, message = body.get("rule_id"), body.get("message")
-    what = f"HTTP {status}" + (f" [{rule}]" if rule else "") + (f": {message}" if message else "")
-    received = str(body["received"]) if body.get("received") else None
-    if status == 401:
-        fail(
-            what,
-            received or "a missing or unknown token",
-            "Pass --token, or set MCP_GREENROOM_TOKEN.",
-        )
-    if status in (403, 409, 422):
-        todo = {
-            403: "Ask a different reviewer: a reviewer is never the submitter.",
-            409: "This name and version is already decided. Submit a new version.",
-            422: "Fix the request as the message says, then send it again.",
-        }[status]
-        fail(what, received or f"refused by the API ({status})", todo, EXIT_REJECTED)
-    fail(what, received or f"HTTP {status} from the API", "Check the API log, then try again.")
 
 
 @app.command()
