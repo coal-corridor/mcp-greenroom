@@ -8,7 +8,12 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 
 from mcp_greenroom.config import Settings
-from mcp_greenroom.interfaces import ClassifierProvider, NoRecording, Scanner
+from mcp_greenroom.interfaces import (
+    ClassifierProvider,
+    ClassifierUnavailable,
+    NoRecording,
+    Scanner,
+)
 from mcp_greenroom.models import (
     Decision,
     Finding,
@@ -197,7 +202,10 @@ class VettingPipeline:
         misses: list[Reason] = []
         for tool in tools:
             try:
-                risks.append(self.provider.classify(tool))
+                result = self.provider.classify(tool)
+                if not isinstance(result, RiskResult) or result.tool_name != tool.name:
+                    raise ClassifierUnavailable("answer is not a result for this tool")
+                risks.append(result)
             except NoRecording:
                 misses.append(
                     Reason(
