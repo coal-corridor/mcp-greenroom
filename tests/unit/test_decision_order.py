@@ -17,6 +17,7 @@ from mcp_greenroom.models import (
     Outcome,
     RiskResult,
     Submission,
+    Tier,
     Tool,
 )
 from mcp_greenroom.vetting.pipeline import Policy, VettingPipeline
@@ -136,3 +137,17 @@ def test_step_4_the_rejection_names_the_rule_the_tool_and_the_offending_text() -
     description = submission.tools[0].description
     assert classifier[0].evidence == description
     assert "0.95" in decision.reasons[0].message
+
+
+# Step 5. Highest risk score at or above the approve threshold: human review.
+
+
+@pytest.mark.parametrize("score", [0.20, 0.79])
+def test_step_5_an_uncertain_score_sends_a_low_tier_server_to_human_review(score: float) -> None:
+    submission = load_sample("payments-readonly")
+    results = low_results(submission) | {"list_payments": risk("list_payments", score)}
+    decision = pipeline(results, findings=[scanner_match()]).vet(submission)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert codes(decision) == ["classifier.uncertain"]
+    assert decision.reasons[0].tool_name == "list_payments"
+    assert decision.tier is Tier.LOW
