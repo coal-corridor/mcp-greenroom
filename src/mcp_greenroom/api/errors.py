@@ -4,9 +4,10 @@ import logging
 from collections.abc import Awaitable, Callable
 from typing import Any, cast
 
-from fastapi import FastAPI, HTTPException, Request, Response, status
+from fastapi import FastAPI, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException  # base of fastapi.HTTPException: 404/405 too
 
 from mcp_greenroom.logging import log_event
 from mcp_greenroom.store import StoreUnavailable
@@ -31,7 +32,10 @@ def _http_error(_: Request, exc: Exception) -> JSONResponse:
     if isinstance(exc.detail, dict):
         body = exc.detail
     else:
-        body = {"rule_id": f"http.{exc.status_code}", "message": str(exc.detail)}
+        body = {
+            "rule_id": f"http.{exc.status_code}",
+            "message": f"Request failed: {exc.detail}. Check the method and path against /docs.",
+        }
     return JSONResponse(body, status_code=exc.status_code, headers=exc.headers)
 
 
