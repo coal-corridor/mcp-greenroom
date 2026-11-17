@@ -1,5 +1,6 @@
 """CLI conventions (edge.md): output, exit codes and inert printing."""
 
+import json
 from pathlib import Path
 
 import httpx
@@ -81,3 +82,35 @@ def test_output_has_no_colour_when_piped_or_no_color(
     assert "\x1b[3" not in result.stdout  # no foreground colour
     assert "\x1b[4" not in result.stdout  # no background colour
     assert "✗ blocked" in result.stdout  # the word carries the status, not the colour
+
+
+def test_client_check_prints_server_names_inert(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    hostile = "[red]pay[/red]\x1b[2Jments​"
+    config = tmp_path / "amp.json"
+    entry = {"command": "npx", "args": ["-y", "@examplebank/x-mcp"]}
+    config.write_text(json.dumps({"amp.mcpServers": {hostile: entry}}))
+    monkeypatch.setattr(cli, "TRANSPORT", _registry_listing())
+
+    result = runner.invoke(app, ["client-check", str(config), "--api", "http://api.test"])
+
+    assert "[red]pay[/red]\\x1b[2Jments\\u200b" in result.stdout
+    assert "\x1b[2J" not in result.stdout
+
+
+def test_error_from_the_api_is_printed_inert(monkeypatch: pytest.MonkeyPatch) -> None:
+    body = {"rule_id": "x[bold]y[/bold]", "message": "bad\x1b]0;t\x07", "received": "l‮atest"}
+
+    def route(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(422, json=body)
+
+    monkeypatch.setattr(cli, "TRANSPORT", httpx.MockTransport(route))
+
+    result = runner.invoke(app, ["status", "sub-1", "--api", "http://api.test"])
+
+    assert result.exit_code == 20
+    assert "x[bold]y[/bold]" in result.stderr
+    assert "bad\\x1b]0;t\\x07" in result.stderr
+    assert "l\\u202eatest" in result.stderr
+    assert "\x1b]" not in result.stderr and "‮" not in result.stderr
