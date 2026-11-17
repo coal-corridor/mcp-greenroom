@@ -1,6 +1,7 @@
 """CLI conventions (edge.md): output, exit codes and inert printing."""
 
 import json
+import re
 from pathlib import Path
 
 import httpx
@@ -14,6 +15,15 @@ ROOT = Path(__file__).resolve().parents[2]
 AMP_CONFIG = ROOT / "sample-data" / "client-configs" / "amp-settings.json"
 
 runner = CliRunner()
+
+_ANSI = re.compile(r"\x1b\[[0-9;]*m")
+
+
+def _visible(text: str) -> str:
+    """Help text as a reader sees it. Typer forces colour in its help screen when GITHUB_ACTIONS,
+    FORCE_COLOR or PY_COLORS is set, which splits '--api' into separately styled pieces."""
+    return _ANSI.sub("", text)
+
 
 COMMANDS = ("submit", "status", "review", "audit", "list", "client-check", "health")
 
@@ -121,7 +131,7 @@ def test_every_command_has_help_with_one_example(command: str) -> None:
     result = runner.invoke(app, [command, "--help"])
 
     assert result.exit_code == 0, result.output
-    assert result.stdout.count("Example: mcp-greenroom") == 1
+    assert _visible(result.stdout).count("Example: mcp-greenroom") == 1
 
 
 def _crashing(request: httpx.Request) -> httpx.Response:
@@ -153,8 +163,8 @@ def test_debug_lets_the_stack_trace_through(monkeypatch: pytest.MonkeyPatch) -> 
 def test_every_command_takes_api_and_token(command: str) -> None:
     result = runner.invoke(app, [command, "--help"])
 
-    assert "--api" in result.stdout
-    assert "--token" in result.stdout
+    assert "--api" in _visible(result.stdout)
+    assert "--token" in _visible(result.stdout)
 
 
 def test_cli_tests_do_not_read_the_local_env_file(
