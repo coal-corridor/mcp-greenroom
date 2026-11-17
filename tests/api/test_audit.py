@@ -93,3 +93,22 @@ def test_the_database_refuses_to_change_audit_records(
     ):
         conn.execute(sqlalchemy.text(statement))
     engine.dispose()
+
+
+def test_a_decline_reads_back(client: TestClient) -> None:
+    body = client.post("/submissions", json=sample("ambiguous-exporter"), headers=RILEY).json()
+    client.post(
+        f"/submissions/{body['submission_id']}/review",
+        json={"action": "decline", "note": "Egress is too broad."},
+        headers=SAM,
+    )
+
+    events = _audit(client, body["submission_id"])
+
+    assert [e["action"] for e in events] == ["submitted", "policy_decision", "declined"]
+    human = events[-1]
+    assert human["actor"] == "sam"
+    assert human["reasons"] == [
+        {"code": "review.declined", "message": "Egress is too broad.", "tool_name": None}
+    ]
+    assert human["policy_version"] == POLICY_VERSION

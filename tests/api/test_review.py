@@ -57,8 +57,13 @@ def test_an_identity_without_the_reviewer_role_cannot_approve(
 def test_identity_in_the_body_is_ignored(client: TestClient, pending: str) -> None:
     response = _review(client, pending, RILEY, action="approve", note="ok", reviewer="sam")
 
-    assert response.status_code != 200
+    assert response.status_code == 422, response.text
+    assert response.json()["rule_id"] == "request.invalid"
     _unchanged(client, pending)
+    assert [
+        e["action"]
+        for e in client.get(f"/submissions/{pending}/audit", headers=DANA).json()["events"]
+    ] == ["submitted", "policy_decision"]
 
 
 @pytest.mark.parametrize("note", ["", "   "])
