@@ -3,6 +3,8 @@
 Written only by the recorder (evals/record.py, `make record`). Never by hand.
 """
 
+import hashlib
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -36,5 +38,14 @@ def recording_path(directory: Path, key: str) -> Path:
     return directory / f"{key}.json"
 
 
+def description_digest(description: str) -> str:
+    return hashlib.sha256(description.encode("utf-8")).hexdigest()
+
+
 def write_recording(directory: Path, recording: Recording) -> Path:
-    raise NotImplementedError
+    """Write the recording as sorted, indented JSON under its key. Returns the path."""
+    directory.mkdir(parents=True, exist_ok=True)
+    path = recording_path(directory, recording.key)
+    text = json.dumps(recording.model_dump(mode="json"), indent=2, sort_keys=True)
+    path.write_text(text + "\n", encoding="utf-8")
+    return path
