@@ -26,13 +26,17 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 ```
 
 ## Open
-Plan items 1 to 5, in order.
+Plan items 2 to 5, then the scanner adapter and config change (moved to the end).
 
 ## Decisions and corrections
 - User approved the five-line plan.
+- Spike (14:36): scanner fits. Parseable, benign clean, poisoned-notes/search_notes 2 HIGH, <1 ms/scan, 2.5 s import. Import loads litellm, which fetches a remote cost map: 8 connect attempts; `LITELLM_LOCAL_MODEL_COST_MAP=True` stops them.
+- User: set that var in `config.py` with `os.environ.setdefault`, own commit, with a test that importing the adapter makes no connection. Approved change to the frozen module, this branch only.
+- User: leave `pyproject.toml`; the lead pins ==4.8.7 at integration.
+- User: scanner adapter and the config change come LAST, after the eval gate. Until then use a no-findings scanner on the seam. Adapter is first to cut.
 
 ## Question at the impasse
-`pyproject.toml` lists the scanner with no version bound (only `uv.lock` pins 4.8.7). Add `==4.8.7`? File is outside this area.
+none
 
 ## Next step
-Scanner fit spike: scratch script over `sample-data/servers/*.json` tools, outside the repo.
+Validation rules, red/green each, starting in `tests/unit/`.
