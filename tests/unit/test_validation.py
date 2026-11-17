@@ -156,3 +156,55 @@ def test_a_server_with_remotes_is_refused_as_source_not_allowed(kind: str) -> No
         validate(with_server(remotes=remote))
     assert refused.value.rule_id == "validation.source_not_allowed"
     assert "remote" in refused.value.message
+
+
+@pytest.mark.parametrize(
+    "identifier",
+    [
+        "github:examplebank/notes-mcp",
+        "examplebank/notes-mcp",
+        "file:../notes-mcp",
+        "git@git.example.com:examplebank/notes-mcp.git",
+        "git+https://git.example.com/examplebank/notes-mcp.git",
+        "@examplebank/notes-mcp@1.0.0",
+        "notes-mcp@latest",
+        "./notes-mcp.tgz",
+        "Notes-MCP",
+        "",
+    ],
+)
+def test_an_npm_identifier_outside_the_name_grammar_is_refused(identifier: str) -> None:
+    with pytest.raises(Refusal) as refused:
+        validate(with_package(identifier=identifier))
+    assert refused.value.rule_id in {"validation.source_not_allowed", "validation.schema"}
+
+
+@pytest.mark.parametrize(
+    "identifier",
+    [
+        "eb-mcp @ https://files.example.com/eb_mcp-1.0.0.whl",
+        "git+https://git.example.com/eb-mcp.git",
+        "eb-mcp==1.0.0",
+        "eb-mcp[extra]",
+        "./eb_mcp",
+        "-eb-mcp",
+    ],
+)
+def test_a_pypi_identifier_outside_the_name_grammar_is_refused(identifier: str) -> None:
+    with pytest.raises(Refusal) as refused:
+        validate(with_package(registryType="pypi", registryBaseUrl=None, identifier=identifier))
+    assert refused.value.rule_id == "validation.source_not_allowed"
+
+
+@pytest.mark.parametrize(
+    ("registry", "identifier"),
+    [
+        ("npm", "@examplebank/payments-readonly-mcp"),
+        ("npm", "notes-mcp"),
+        ("npm", "notes.mcp_v2"),
+        ("pypi", "eb-mcp"),
+        ("pypi", "Eb_MCP.server2"),
+    ],
+)
+def test_a_plain_package_name_passes(registry: str, identifier: str) -> None:
+    validate(with_package(registryType=registry, registryBaseUrl=None, identifier=identifier))
