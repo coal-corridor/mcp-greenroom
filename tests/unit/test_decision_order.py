@@ -209,3 +209,25 @@ def test_step_7_a_medium_or_high_tier_sends_to_human_review(
     assert decision.outcome is Outcome.HUMAN_REVIEW
     assert decision.tier is tier
     assert codes(decision) == [f"tier.{tier.value}"]
+
+
+# Step 8. Tier low: approved by policy, or human review when policy demands a human.
+
+
+def test_step_8_a_low_tier_server_with_low_scores_is_approved_by_policy() -> None:
+    submission = load_sample("payments-readonly")
+    decision = pipeline(low_results(submission)).vet(submission)
+    assert decision.outcome is Outcome.APPROVED
+    assert decision.tier is Tier.LOW
+    assert codes(decision) == ["policy.tier_low"]
+    assert decision.decided_by == "policy"
+    assert len(decision.risks) == 2
+
+
+def test_step_8_policy_can_demand_a_human_for_every_server() -> None:
+    submission = load_sample("payments-readonly")
+    strict = Policy(0.80, 0.20, "test-policy", require_human_for_all=True)
+    decision = pipeline(low_results(submission), policy=strict).vet(submission)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert decision.tier is Tier.LOW
+    assert codes(decision) == ["policy.human_required"]
