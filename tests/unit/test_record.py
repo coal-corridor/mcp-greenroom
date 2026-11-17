@@ -140,3 +140,14 @@ def test_without_a_model_or_key_the_run_stops_before_any_call(
     monkeypatch.chdir(Path(__file__).resolve().parents[2])
     assert main(["--env-file", ""]) == 2
     assert "MCP_GREENROOM_MODEL_API_KEY" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("status", [400, 401, 404])
+def test_a_first_call_that_fails_on_the_request_stops_the_run(tmp_path: Path, status: int) -> None:
+    handler = model(status=status)
+    summary = run(tmp_path, handler)
+    assert summary.aborted
+    assert handler.calls == 1  # type: ignore[attr-defined]  # no retry, no second tool
+    assert str(status) in summary.first_error
+    assert KEY not in summary.first_error
+    assert list(tmp_path.glob("*.json")) == []
