@@ -96,6 +96,7 @@ def test_readiness_says_not_ready_and_why(
 
 
 def test_no_list_at_all_without_a_last_good_copy(client: TestClient, settings: Settings) -> None:
+    settings.snapshot_path.unlink()
     _break_database(settings)
 
     response = client.get("/v0.1/servers")

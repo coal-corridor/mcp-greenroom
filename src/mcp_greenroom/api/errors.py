@@ -8,6 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from mcp_greenroom.logging import log_event
+from mcp_greenroom.store import StoreUnavailable
 
 
 class ApiError(Exception):
@@ -44,6 +45,16 @@ def _validation_error(_: Request, exc: Exception) -> JSONResponse:
     return JSONResponse(body, status_code=status.HTTP_422_UNPROCESSABLE_CONTENT)
 
 
+def _store_unavailable(_: Request, exc: Exception) -> JSONResponse:
+    log_event("store.unavailable", logging.ERROR, error=str(exc))
+    body = {
+        "rule_id": "store.unavailable",
+        "message": "The registry store is unavailable, so nothing can be submitted or decided. "
+        "Try again later; GET /readyz says when the store is back.",
+    }
+    return JSONResponse(body, status_code=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+
 def _unexpected(_: Request, exc: Exception) -> JSONResponse:
     log_event("http.unhandled_error", logging.ERROR, error=type(exc).__name__)
     body = {
@@ -58,4 +69,5 @@ def install(app: FastAPI) -> None:
     app.add_exception_handler(ApiError, _api_error)
     app.add_exception_handler(HTTPException, _http_error)
     app.add_exception_handler(RequestValidationError, _validation_error)
+    app.add_exception_handler(StoreUnavailable, _store_unavailable)
     app.add_exception_handler(Exception, _unexpected)
