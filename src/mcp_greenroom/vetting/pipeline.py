@@ -119,6 +119,22 @@ class VettingPipeline:
             ]
             return self._decision(Outcome.REJECTED, tier, reasons, evidence, risks)
 
+        # Step 5. Highest risk score at or above the approve threshold: human review.
+        uncertain = [r for r in risks if r.score >= self.policy.approve_threshold]
+        if uncertain:
+            reasons = [
+                Reason(
+                    code="classifier.uncertain",
+                    message=(
+                        f"Risk score {r.score:.2f} is not below the approve threshold "
+                        f"{self.policy.approve_threshold:.2f}."
+                    ),
+                    tool_name=r.tool_name,
+                )
+                for r in uncertain
+            ]
+            return self._decision(Outcome.HUMAN_REVIEW, tier, reasons, [], risks)
+
         return self._decision(
             Outcome.HUMAN_REVIEW,
             tier,
