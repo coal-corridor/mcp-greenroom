@@ -147,3 +147,11 @@ def test_debug_lets_the_stack_trace_through(monkeypatch: pytest.MonkeyPatch) -> 
     result = runner.invoke(app, ["--debug", "status", "sub-1", "--api", "http://api.test"])
 
     assert isinstance(result.exception, RuntimeError)
+
+
+@pytest.mark.parametrize("command", COMMANDS)
+def test_every_command_takes_api_and_token(command: str) -> None:
+    result = runner.invoke(app, [command, "--help"])
+
+    assert "--api" in result.stdout
+    assert "--token" in result.stdout
