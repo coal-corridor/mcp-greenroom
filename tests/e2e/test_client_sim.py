@@ -1,5 +1,6 @@
 """Client check (edge.md): the simulator allows listed servers and blocks the rest."""
 
+import json
 from pathlib import Path
 from typing import Any
 
@@ -111,3 +112,54 @@ def test_server_listed_on_a_later_page_is_allowed() -> None:
     allowed = {v.server for v in check_config(AMP_CONFIG, registry) if v.allowed}
 
     assert allowed == {"payments"}
+
+
+def _config(tmp_path: Path, entry: dict[str, Any]) -> Path:
+    config = tmp_path / "amp.json"
+    config.write_text(json.dumps({"amp.mcpServers": {"server": entry}}))
+    return config
+
+
+@pytest.mark.parametrize(
+    ("entry", "allowed"),
+    [
+        ({"command": "uvx", "args": ["approved-mcp==1.0"]}, True),
+        ({"command": "uvx", "args": ["approved-mcp@1.0"]}, True),
+        ({"command": "uvx", "args": ["--from", "approved-mcp", "approved-mcp"]}, True),
+        ({"command": "uvx", "args": ["--with", "other-pkg", "approved-mcp"]}, False),
+        (
+            {"command": "uvx", "args": ["--from", "approved-mcp", "--with", "x", "approved-mcp"]},
+            False,
+        ),
+        ({"command": "uvx", "args": ["--from", "approved-mcp", "other-cmd"]}, False),
+        (
+            {
+                "command": "npx",
+                "args": ["-y", "-p", "other-pkg", "@examplebank/payments-readonly-mcp"],
+            },
+            False,
+        ),
+        ({"command": "docker", "args": ["run", "-i", "approved-mcp"]}, False),
+    ],
+    ids=[
+        "pypi-eq-version",
+        "uvx-at-version",
+        "from-same",
+        "with-second-package",
+        "from-and-with",
+        "from-other-command",
+        "npx-second-package",
+        "docker-blocked",
+    ],
+)
+def test_runner_arguments_cannot_bring_in_an_unlisted_package(
+    tmp_path: Path, entry: dict[str, Any], allowed: bool
+) -> None:
+    listing = _registry(
+        _record("com.examplebank/approved", "pypi", "approved-mcp"),
+        _record("com.examplebank/payments-readonly", "npm", "@examplebank/payments-readonly-mcp"),
+    )
+
+    (verdict,) = check_config(_config(tmp_path, entry), listing)
+
+    assert verdict.allowed is allowed
