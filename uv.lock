@@ -835,7 +835,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "cisco-ai-mcp-scanner" },
+    { name = "cisco-ai-mcp-scanner", specifier = "==4.8.7" },
     { name = "fastapi", specifier = ">=0.115" },
     { name = "httpx", specifier = ">=0.27" },
     { name = "jsonschema", specifier = ">=4.23" },
