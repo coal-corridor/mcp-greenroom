@@ -2,8 +2,7 @@
 # Demo, end to end: start the service, walk the main path and the five safe failures with the
 # mcp-greenroom CLI, print each result, stop the service.
 #
-# Usage: ./scripts/demo.sh          the real app (make run's app)
-#        ./scripts/demo.sh --fake   the real app with the contracts FakePipeline (before vetting)
+# Usage: ./scripts/demo.sh   make run's app, with the real pipeline (replayed classifier, YARA scanner)
 #
 # Every step states the exit code it expects. The demo fails if any step differs.
 # Data lives in a temporary directory, removed at the end. No network beyond localhost.
@@ -11,12 +10,10 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-fake=0
-case "${1:-}" in
-  --fake) fake=1 ;;
-  "") ;;
-  *) echo "Usage: ./scripts/demo.sh [--fake]" >&2; exit 2 ;;
-esac
+if [[ $# -gt 0 ]]; then
+  echo "Usage: ./scripts/demo.sh (no arguments)" >&2
+  exit 2
+fi
 
 port="${DEMO_PORT:-8765}"
 data="$(mktemp -d)"
@@ -60,13 +57,9 @@ submission_id() {
     | uv run --quiet python -c 'import json, sys; print(json.load(sys.stdin)["submission_id"])'
 }
 
-echo "Starting the service on port ${port} ($([[ $fake -eq 1 ]] && echo 'fake pipeline' || echo 'real app'))."
-if [[ $fake -eq 1 ]]; then
-  uv run --quiet python -m tests.e2e.fake_service --port "$port" --data-dir "$data" &
-else
-  uv run --quiet uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port "$port" \
-    --log-level warning &
-fi
+echo "Starting the service on port ${port} (real pipeline: replayed classifier, YARA scanner)."
+uv run --quiet uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port "$port" \
+  --log-level warning &
 pid=$!
 
 for _ in $(seq 1 60); do

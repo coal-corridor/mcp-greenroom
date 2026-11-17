@@ -12,6 +12,7 @@ from mcp_greenroom.api.routers import audit, health, reviews, servers, submissio
 from mcp_greenroom.config import ConfigError, Settings, load_settings
 from mcp_greenroom.logging import configure_logging, log_event
 from mcp_greenroom.store import SqlStore, StoreUnavailable
+from mcp_greenroom.vetting.factory import build_pipeline
 
 
 async def _log_request(
@@ -41,6 +42,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        # Built once and reused: loading the scanner takes about 2.5 s.
+        app.state.pipeline = build_pipeline(settings)
         store = SqlStore(settings.database_url, settings.snapshot_path)
         try:  # a broken store at startup degrades, it does not stop the service
             store.ensure_schema()

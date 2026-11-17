@@ -1,6 +1,6 @@
 """Injection points. Tests swap each one through app.dependency_overrides.
 
-Frozen names and return types. Registry writes the bodies; until then each raises.
+Frozen names and return types.
 Example in a test:
 
     app.dependency_overrides[get_pipeline] = lambda: FakePipeline()
@@ -15,9 +15,13 @@ from mcp_greenroom.interfaces import Pipeline, Store
 from mcp_greenroom.models import Identity
 
 
-def get_pipeline() -> Pipeline:
-    """The vetting pipeline, with its classifier provider and scanner already inside."""
-    raise NotImplementedError("registry wires the real pipeline here")
+def get_pipeline(request: Request) -> Pipeline:
+    """The vetting pipeline, with its classifier provider and scanner already inside.
+
+    Built once at startup by build_pipeline(settings) (api.main lifespan) and reused.
+    """
+    pipeline: Pipeline = request.app.state.pipeline
+    return pipeline
 
 
 def get_store(request: Request) -> Store:
