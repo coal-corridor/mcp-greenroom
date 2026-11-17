@@ -8,7 +8,7 @@ pyproject.toml  uv.lock  Makefile  .env.example
 .claude/                 settings, hooks, skills, reviewer agent
 .github/workflows/ci.yml pull request checks
 briefs/                  one brief per phase and per area
-docs/                    spec notes, references, prompts, this file
+docs/                    spec notes, references, this file
 docs/specs/              mcp-greenroom.md (the parent) and five child specs
 contracts/               pinned upstream documents, with sources      lead, frozen
 src/mcp_greenroom/

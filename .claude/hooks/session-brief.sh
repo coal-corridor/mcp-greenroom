@@ -46,7 +46,7 @@ echo "Branch: $branch. Session: $session."
 if [ -n "$brief" ]; then
   echo "Read, if not yet in this conversation: docs/specs/mcp-greenroom.md, $child, $brief. No other child spec."
 else
-  echo "Lead session. The phase prompts are in docs/prompts.md."
+  echo "Lead session. The user gives the prompt for each phase."
 fi
 
 changed="$(git status --short 2>/dev/null | head -n 15)"

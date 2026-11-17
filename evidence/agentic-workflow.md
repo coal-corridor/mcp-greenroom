@@ -30,7 +30,8 @@ Beyond these, the plan uses the built-in `/code-review` and `/security-review` a
 | `intent.md`, the spec (a parent and five child specs) and its notes file | Claude chat | Yes |
 | README overview, `ROADMAP.md`, `references.md`, this skeleton | Claude chat | Yes |
 | The seven project skills and the reviewer agent definition | Claude chat | Yes, under `.claude/` |
-| `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json` with three hook scripts, the briefs, the prompt list and the headings of the remaining evidence files | Claude chat | Yes |
+| `AGENTS.md`, `CLAUDE.md`, `.claude/settings.json` with three hook scripts, the briefs and the headings of the remaining evidence files | Claude chat | Yes |
+| The planned prompt for each phase and the steering rules for the user | Claude chat | Not in the tree. The prompts actually sent are in section 4 |
 | `TODO(build)`: if the templates were copied (check script, CI workflow, `pyproject.toml`), list them here. If the agents wrote them inside the timebox, delete this row | | |
 | Build environment: WSL 2 with Ubuntu 24.04, toolchain checked by a probe script, a trimmed Claude Code profile | By hand and with Claude Code | No |
 
