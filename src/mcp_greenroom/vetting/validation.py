@@ -19,6 +19,13 @@ from mcp_greenroom.models import Submission
 MAX_RECEIVED = 80
 SCHEMA_PATH = Path(__file__).resolve().parents[3] / "contracts" / "server.schema.json"
 
+# Allowed package sources: registry type -> its one allowed base URL. A package without
+# registryBaseUrl comes from the type's public registry. Anything else is refused.
+ALLOWED_SOURCES: dict[str, str] = {
+    "npm": "https://registry.npmjs.org",
+    "pypi": "https://pypi.org",
+}
+
 # One exact version: digits first (an optional "v"), dot-separated numbers, then an optional
 # pre-release or build suffix. Refuses tags ("latest", "next"), ranges and wildcards.
 _PINNED = re.compile(r"v?\d+(?:\.\d+)*(?:[-+][0-9A-Za-z.+-]+)?")
@@ -79,7 +86,48 @@ def _check_schema(server: dict[str, Any]) -> None:
     )
 
 
+def _source_allowed(package: dict[str, Any]) -> bool:
+    allowed = ALLOWED_SOURCES.get(package.get("registryType", ""))
+    base = package.get("registryBaseUrl", allowed)
+    identifier = package.get("identifier", "")
+    return (
+        allowed is not None
+        and isinstance(base, str)
+        and base.rstrip("/") == allowed
+        and isinstance(identifier, str)
+        and "://" not in identifier
+    )
+
+
+def _check_sources(server: dict[str, Any]) -> None:
+    packages = server.get("packages") or []
+    todo = (
+        f"Publish the package to an allowed registry ({', '.join(ALLOWED_SOURCES.values())}) "
+        "and submit it by name."
+    )
+    if not packages:
+        raise _refuse(
+            "validation.source_not_allowed",
+            "Package source is not allowed: the server lists no package",
+            packages,
+            todo,
+        )
+    for package in packages:
+        if not _source_allowed(package):
+            source = (
+                f"{package.get('registryType')} {package.get('registryBaseUrl', '(default)')} "
+                f"{package.get('identifier')}"
+            )
+            raise _refuse(
+                "validation.source_not_allowed",
+                "Package source is not allowed",
+                source,
+                todo,
+            )
+
+
 def validate(submission: Submission) -> None:
     """Raise Refusal when the submission breaks a step-1 rule. Return None when it passes."""
     _check_versions(submission.server)
     _check_schema(submission.server)
+    _check_sources(submission.server)
