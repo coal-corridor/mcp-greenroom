@@ -57,3 +57,21 @@ def test_live_provider_needs_model_and_key_and_never_echoes_the_key(
         load_settings(env_file=None)
     assert "MCP_GREENROOM_MODEL" in str(caught.value)
     assert "synthetic-key-value-123" not in str(caught.value)
+
+
+@pytest.mark.parametrize(
+    ("variable", "value"),
+    [
+        ("MCP_GREENROOM_REJECT_THRESHOLD", "0.9"),
+        ("MCP_GREENROOM_APPROVE_THRESHOLD", "0.1"),
+        ("MCP_GREENROOM_REQUIRE_HUMAN_FOR_ALL", "true"),
+    ],
+)
+def test_a_policy_change_without_a_new_policy_version_stops_startup(
+    monkeypatch: pytest.MonkeyPatch, variable: str, value: str
+) -> None:
+    monkeypatch.setenv(variable, value)
+    with pytest.raises(ConfigError, match="MCP_GREENROOM_POLICY_VERSION"):
+        load_settings(env_file=None)
+    monkeypatch.setenv("MCP_GREENROOM_POLICY_VERSION", "2026-11-17.2")
+    assert load_settings(env_file=None).policy_version == "2026-11-17.2"
