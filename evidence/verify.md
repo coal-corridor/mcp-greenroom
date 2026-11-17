@@ -274,7 +274,7 @@ Last commit of `main`: `2b6ee66`, the merge of pull request 5 (integration). Run
 - Dependency audit: `Found no known vulnerabilities and no adverse project statuses in 118 packages`. Two advisories in `litellm 1.93.2` (GHSA-g5ff-637f-6q2m, GHSA-7hp6-4w63-5g45) are waived in `[tool.uv.audit]`, with a record in `decisions.md`. No other finding.
 - Red runs on the way: pull request 3, run 44016794010 (`verify (test)`, Typer colour under `GITHUB_ACTIONS`, fixed in `500774a`). Pull request 4, run 44018534676 (secret scan, 47 false positives on the replay keys, allowlisted in `eedd2ca`).
 - Not enforced: the repository is private and no check is marked required. The user merged each pull request by hand on green. Squash and rebase merging are off (`allow_squash_merge: false`, `allow_rebase_merge: false`). Each action is pinned to a commit, permissions are `contents: read`, and no repository secret is used.
-- Not yet run in CI: this branch, `evidence`. After the evidence pull request is merged, this section links the run on the new last commit of `main` instead (the user's decision).
+- This pull request, `evidence`: its [checks](https://github.com/coal-corridor/mcp-greenroom/pull/6/checks) always show the run on its last commit. When this line was written, the last run was [44026069929](https://github.com/coal-corridor/mcp-greenroom/actions/runs/44026069929) on `3cab976`, all five jobs green. A file cannot name the run of the commit that contains it, so the checks page is the link for the final commit.
 
 ## Independent review
 
@@ -291,7 +291,7 @@ The six High findings: an unhandled exception logged raw by uvicorn (`809b877`) 
 
 Deferred items taken up at integration: `get_store` typed as `SqlStore` (registry 8, `b328724`), one policy-version source (registry 10, test `57027aa`), and startup refusing a policy change under the default version (vetting 4, `d4516d1`). The rest are listed in `ROADMAP.md` under "Deferred from the area reviews".
 
-Where the reviewer could not know: vetting 12 and edge 2 flagged files edited outside the area that the user had approved in the session. Several findings carry the reviewer's own "unsure" (registry 7, edge 5, vetting 1 to 3 on client behaviour). `TODO(user)`: did you judge any finding wrong, beyond these two?
+Where the reviewer could not know: vetting 12 and edge 2 flagged files edited outside the area that the user had approved in the session. Several findings carry the reviewer's own "unsure" (registry 7, edge 5, vetting 1 to 3 on client behaviour). No finding was judged wrong. Accepted without a change: registry 13, edge 2, 3 and 10, vetting 12 and 13, integration 2 and 5. Edge 3 (the client check ignores the version) was judged to follow the spec.
 
 ### Integration review
 
