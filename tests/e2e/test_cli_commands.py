@@ -98,3 +98,39 @@ def test_review_needs_exactly_one_of_approve_or_decline(flags: list[str]) -> Non
     result = runner.invoke(app, ["review", "sub-1", *flags, "--note", "x", *API])
 
     assert result.exit_code == 2
+
+
+def test_audit_lists_time_actor_action_reasons_and_policy_version(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    event = {
+        "submission_id": "sub-1",
+        "actor": "dana",
+        "action": "submitted",
+        "at": "2026-11-17T10:00:00Z",
+        "reasons": [],
+        "policy_version": "2026-11-17.1",
+    }
+    decided = {
+        **event,
+        "actor": "riley",
+        "action": "approved",
+        "at": "2026-11-17T10:05:00Z",
+        "reasons": [{"code": "review.approved", "message": "Note‮[b]x[/b]", "tool_name": None}],
+    }
+    body = {"submission_id": "sub-1", "events": [event, decided]}
+
+    def route(request: httpx.Request) -> httpx.Response:
+        assert (request.method, request.url.path) == ("GET", "/submissions/sub-1/audit")
+        return httpx.Response(200, json=body)
+
+    monkeypatch.setattr(cli, "TRANSPORT", api(route))
+
+    result = runner.invoke(app, ["audit", "sub-1", *API])
+    as_json = runner.invoke(app, ["audit", "sub-1", *API, "--json"])
+
+    assert result.exit_code == 0, result.output
+    for text in ("2026-11-17T10:05:00Z", "riley", "approved", "review.approved", "2026-11-17.1"):
+        assert text in result.stdout
+    assert "Note\\u202e[b]x[/b]" in result.stdout
+    assert json.loads(as_json.stdout) == body
