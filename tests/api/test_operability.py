@@ -5,6 +5,7 @@ import logging
 import os
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -67,11 +68,13 @@ def test_logs_carry_no_tool_text(client: TestClient, caplog: pytest.LogCaptureFi
         assert tool["description"] not in caplog.text
 
 
-def test_invalid_configuration_stops_startup_with_a_clear_message() -> None:
-    env = {**os.environ, "MCP_GREENROOM_REJECT_THRESHOLD": "lots"}
+def test_invalid_configuration_stops_startup_with_a_clear_message(tmp_path: Path) -> None:
+    # minimal environment, and a working directory with no .env: nothing local leaks in
+    env = {"PATH": os.environ.get("PATH", ""), "MCP_GREENROOM_REJECT_THRESHOLD": "lots"}
     result = subprocess.run(
         [sys.executable, "-c", "import mcp_greenroom.api.main"],
         env=env,
+        cwd=tmp_path,
         capture_output=True,
         text=True,
         timeout=60,
