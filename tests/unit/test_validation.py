@@ -4,7 +4,7 @@ import pytest
 
 from mcp_greenroom.interfaces import Refusal
 from mcp_greenroom.vetting.validation import validate
-from tests.unit.helpers import load_sample, with_package, with_server
+from tests.unit.helpers import load_sample, with_package, with_server, with_tools
 
 NOT_PINNED = [
     "latest",
@@ -140,3 +140,10 @@ def test_a_server_with_no_package_is_refused_as_source_not_allowed(packages: obj
 )
 def test_a_package_from_an_allowed_source_passes(changes: dict[str, str]) -> None:
     validate(with_package(**changes))
+
+
+def test_a_submission_with_no_tools_is_refused() -> None:
+    with pytest.raises(Refusal) as refused:
+        validate(with_tools([]))
+    assert refused.value.rule_id == "validation.no_tools"
+    assert refused.value.message.startswith("No tools")
