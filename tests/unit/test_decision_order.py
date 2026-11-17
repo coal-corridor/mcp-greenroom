@@ -110,3 +110,29 @@ def test_step_3_a_missing_recording_wins_over_a_reject_score_on_another_tool() -
     assert codes(decision) == ["classifier.no_recording"]
     assert decision.reasons[0].tool_name == "list_payments"
     assert decision.risks == (results["get_balance"],)
+
+
+# Step 4. Highest risk score at or above the reject threshold: rejected.
+
+
+@pytest.mark.parametrize("score", [0.80, 0.97])
+def test_step_4_a_score_at_the_reject_threshold_rejects(score: float) -> None:
+    submission = load_sample("poisoned-notes")
+    results = low_results(submission) | {"search_notes": risk("search_notes", score)}
+    decision = pipeline(results, findings=[scanner_match("search_notes")]).vet(submission)
+    assert decision.outcome is Outcome.REJECTED
+    assert codes(decision) == ["classifier.reject_threshold"]
+    assert decision.reasons[0].tool_name == "search_notes"
+
+
+def test_step_4_the_rejection_names_the_rule_the_tool_and_the_offending_text() -> None:
+    submission = load_sample("poisoned-notes")
+    results = low_results(submission) | {"search_notes": risk("search_notes", 0.95)}
+    decision = pipeline(results).vet(submission)
+    classifier = [f for f in decision.findings if f.source is FindingSource.CLASSIFIER]
+    assert [(f.rule_id, f.tool_name) for f in classifier] == [
+        ("classifier.reject_threshold", "search_notes")
+    ]
+    description = submission.tools[0].description
+    assert classifier[0].evidence == description
+    assert "0.95" in decision.reasons[0].message
