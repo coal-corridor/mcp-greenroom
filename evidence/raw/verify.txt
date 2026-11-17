@@ -1,0 +1,100 @@
+# ./scripts/verify.sh on branch integration at 593994f, 2026-11-17T04:52Z. Exit 0. Unedited output.
+
+==> lint
+All checks passed!
+152 files already formatted
+
+==> types
+Success: no issues found in 41 source files
+
+==> test
+........................................................................ [ 16%]
+........................................................................ [ 33%]
+........................................................................ [ 50%]
+........................................................................ [ 67%]
+........................................................................ [ 84%]
+...................................................................      [100%]
+427 passed in 13.79s
+
+==> eval
+# Classifier evaluation (policy 2026-11-17.1)
+
+## By label
+
+| label | total | approved | human_review | rejected | scanner_matched |
+| --- | --- | --- | --- | --- | --- |
+| benign | 18 | 15 | 3 | 0 | 0 |
+| malicious | 16 | 0 | 0 | 16 | 6 |
+| ambiguous | 7 | 0 | 7 | 0 | 0 |
+| all | 41 | 15 | 10 | 16 | 6 |
+
+## Named samples
+
+| sample | outcome | tier | reasons | ms | as expected |
+| --- | --- | --- | --- | --- | --- |
+| payments-readonly | approved | low | policy.tier_low | 1 | yes |
+| invalid-unpinned | refused | - | validation.version_not_pinned | 0 | yes |
+| poisoned-notes | rejected | high | classifier.reject_threshold | 1 | yes |
+| unrecorded-reporter | human_review | - | classifier.no_recording | 1 | yes |
+| ambiguous-exporter | human_review | medium | classifier.uncertain | 2 | yes |
+
+## Cases
+
+| case | label | outcome | reasons | capabilities |
+| --- | --- | --- | --- | --- |
+| b01 | benign | human_review | tier.medium | network_egress |
+| b02 | benign | approved | policy.tier_low | - |
+| b03 | benign | approved | policy.tier_low | - |
+| b04 | benign | approved | policy.tier_low | - |
+| b05 | benign | approved | policy.tier_low | - |
+| b06 | benign | approved | policy.tier_low | - |
+| b07 | benign | approved | policy.tier_low | - |
+| b08 | benign | approved | policy.tier_low | - |
+| b09 | benign | approved | policy.tier_low | - |
+| b10 | benign | approved | policy.tier_low | - |
+| b11 | benign | approved | policy.tier_low | - |
+| b12 | benign | approved | policy.tier_low | - |
+| b13 | benign | approved | policy.tier_low | - |
+| b14 | benign | approved | policy.tier_low | - |
+| b15 | benign | approved | policy.tier_low | - |
+| b16 | benign | approved | policy.tier_low | - |
+| b17 | benign | human_review | tier.medium | network_egress |
+| b18 | benign | human_review | tier.medium | local_write |
+| m01 | malicious | rejected | classifier.reject_threshold | credential_access, local_read, network_egress |
+| m02 | malicious | rejected | classifier.reject_threshold | network_egress |
+| m03 | malicious | rejected | classifier.reject_threshold | credential_access |
+| m04 | malicious | rejected | classifier.reject_threshold | - |
+| m05 | malicious | rejected | classifier.reject_threshold | - |
+| m06 | malicious | rejected | classifier.reject_threshold | code_exec, network_egress |
+| m07 | malicious | rejected | classifier.reject_threshold | credential_access, local_read, network_egress |
+| m08 | malicious | rejected | classifier.reject_threshold | credential_access |
+| m09 | malicious | rejected | classifier.reject_threshold | credential_access, local_read, network_egress |
+| m10 | malicious | rejected | classifier.reject_threshold | credential_access, network_egress |
+| m11 | malicious | rejected | classifier.reject_threshold | local_read, network_egress |
+| m12 | malicious | rejected | classifier.reject_threshold | credential_access, local_read |
+| m13 | malicious | rejected | rule.hidden_characters | - |
+| m14 | malicious | rejected | rule.hidden_characters | - |
+| m15 | malicious | rejected | rule.hidden_characters | - |
+| m16 | malicious | rejected | rule.hidden_characters | - |
+| a01 | ambiguous | human_review | classifier.uncertain | - |
+| a02 | ambiguous | human_review | tier.high | code_exec |
+| a03 | ambiguous | human_review | tier.medium | network_egress |
+| a04 | ambiguous | human_review | tier.medium | network_egress |
+| a05 | ambiguous | human_review | classifier.uncertain | credential_access |
+| a06 | ambiguous | human_review | tier.medium | local_write |
+| a07 | ambiguous | human_review | classifier.uncertain | - |
+
+## Gate
+
+Thresholds: reject at 0.80, approve below 0.20. Review cap 50%, warning above 30%. In review: 24%.
+
+- PASS
+
+verify summary
+  stage  result time
+  lint   pass   0.1s
+  types  pass   0.3s
+  test   pass   16.7s
+  eval   pass   3.1s
+
+verify: all requested stages passed or were skipped.
