@@ -1,0 +1,95 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(./scripts/verify.sh *)",
+      "Bash(./scripts/demo.sh *)",
+      "Bash(uv sync *)",
+      "Bash(uv lock *)",
+      "Bash(uv run pytest *)",
+      "Bash(uv run ruff *)",
+      "Bash(uv run mypy *)",
+      "Bash(uv run mcp-greenroom *)",
+      "Bash(uv run uvicorn *)",
+      "Bash(uv run python -m evals.run_eval *)",
+      "Bash(make verify)",
+      "Bash(make run)",
+      "Bash(make demo)",
+      "Bash(git status *)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch --show-current)",
+      "Bash(git show *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git restore --staged *)",
+      "Bash(git update-index --chmod=+x *)",
+      "Bash(git worktree list *)",
+      "Bash(gh pr view *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:static.modelcontextprotocol.io)"
+    ],
+    "ask": [
+      "Bash(git push *)",
+      "Bash(git merge *)",
+      "Bash(gh pr create *)",
+      "Bash(uv add *)",
+      "Bash(make record *)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.local)",
+      "Read(./secrets/**)",
+      "Edit(/evals/recordings/**)",
+      "Bash(git commit --amend *)",
+      "Bash(git commit * --amend)",
+      "Bash(git commit * --amend *)",
+      "Bash(git rebase *)",
+      "Bash(git reset *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(gh pr merge *)"
+    ]
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/session-brief.sh\"",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/stop-verify.sh\"",
+            "timeout": 180
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/.claude/hooks/format-on-write.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

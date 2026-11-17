@@ -52,7 +52,7 @@ Rules run before the classifier, and the classifier can escalate a case but neve
 
 ## Evidence
 
-The evidence pack is in [`evidence/`](evidence/): `intent.md`, `design.md`, `agentic-workflow.md`, `verify.md`, `operate.md`, `decisions.md`. The spec the slice was built against is [`docs/spec.md`](docs/spec.md), with one child spec per area in [`docs/spec/`](docs/spec/). The roadmap is [`ROADMAP.md`](ROADMAP.md).
+The evidence pack is in [`evidence/`](evidence/): `intent.md`, `design.md`, `agentic-workflow.md`, `verify.md`, `operate.md`, `decisions.md`. The spec the slice was built against is [`docs/specs/mcp-greenroom.md`](docs/specs/mcp-greenroom.md), with one child spec per area in [`docs/specs/`](docs/specs/). The roadmap is [`ROADMAP.md`](ROADMAP.md).
 
 ## Where things are
 
