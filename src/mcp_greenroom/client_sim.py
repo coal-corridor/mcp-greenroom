@@ -15,6 +15,7 @@ import httpx
 
 SERVERS_KEY = "amp.mcpServers"
 LIST_PATH = "/v0.1/servers"
+MAX_PAGES = 1000
 
 # Launch command -> registry type.
 _RUNNERS = {"npx": "npm", "uvx": "pypi", "docker": "oci"}
@@ -60,9 +61,10 @@ def _packages(record: object) -> set[tuple[str, str]]:
     return found
 
 
-def _listed(registry: httpx.Client) -> set[tuple[str, str]]:
+def _page(registry: httpx.Client, cursor: str | None) -> dict[str, Any]:
+    params = {"cursor": cursor} if cursor else {}
     try:
-        response = registry.get(LIST_PATH)
+        response = registry.get(LIST_PATH, params=params)
         response.raise_for_status()
         body = response.json()
     except httpx.HTTPStatusError as exc:
@@ -71,10 +73,26 @@ def _listed(registry: httpx.Client) -> set[tuple[str, str]]:
         raise RegistryUnusableError(f"unreachable ({type(exc).__name__})") from None
     except ValueError:
         raise RegistryUnusableError("the reply is not JSON") from None
-    records = body.get("servers") if isinstance(body, dict) else None
-    if not isinstance(records, list):
+    if not isinstance(body, dict) or not isinstance(body.get("servers"), list):
         raise RegistryUnusableError("the reply has no servers list")
-    return {package for record in records for package in _packages(record)}
+    return body
+
+
+def _listed(registry: httpx.Client) -> set[tuple[str, str]]:
+    listed: set[tuple[str, str]] = set()
+    cursor: str | None = None
+    seen: set[str] = set()
+    for _ in range(MAX_PAGES):
+        body = _page(registry, cursor)
+        listed |= {package for record in body["servers"] for package in _packages(record)}
+        metadata = body.get("metadata")
+        cursor = metadata.get("nextCursor") if isinstance(metadata, dict) else None
+        if not cursor:
+            return listed
+        if not isinstance(cursor, str) or cursor in seen:
+            raise RegistryUnusableError("the paging cursor repeats or is not a string")
+        seen.add(cursor)
+    raise RegistryUnusableError(f"the list runs past {MAX_PAGES} pages")
 
 
 def check_config(config_path: Path, registry: httpx.Client) -> list[Verdict]:
