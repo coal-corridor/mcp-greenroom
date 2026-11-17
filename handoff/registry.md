@@ -1,6 +1,6 @@
 # Handoff: registry on area/registry
 
-State at commit 6670fea (2026-11-17). Uncommitted files: none.
+State at commit d035b6c (2026-11-17). Uncommitted files: none.
 
 ## Goal
 HTTP API, store, published list and audit trail as `docs/specs/registry.md` says, against the fake pipeline until vetting merges.
@@ -13,34 +13,33 @@ HTTP API, store, published list and audit trail as `docs/specs/registry.md` says
 5. Red/green per behaviour, then `verify-change`, criteria mapped to tests here.
 
 ## Done (each criterion and its test)
-- Main path (parent): tests/api/test_submit.py, tests/contract/test_server_list.py::test_list_holds_only_approved_versions_in_upstream_format
-- Validation rejection (parent): tests/api/test_refusal.py
+- Main path (parent): API side only, not met end to end (fake pipeline). tests/api/test_submit.py, tests/contract/test_server_list.py
+- Validation rejection (parent): API side only, not met end to end (fake rule id). tests/api/test_refusal.py
 - Immutable versions (parent): tests/api/test_resubmission.py, test_refusal.py::test_a_refusal_stores_no_decision
-- Standard format: tests/contract/test_server_list.py (incl. cursor paging)
-- Separation of duties: tests/api/test_review.py
-- Degrade mode: tests/failure/test_degrade.py (SQLite file overwritten, no handler flag)
-- Audit: tests/api/test_audit.py (incl. triggers refusing UPDATE/DELETE)
-- Operability: tests/failure/test_degrade.py (livez/readyz), tests/api/test_operability.py
-- Stub identities dev only: tests/api/test_identity.py. Fail closed on crash: tests/failure/test_pipeline_crash.py
+- Standard format: tests/contract/test_server_list.py. Separation of duties: tests/api/test_review.py
+- Degrade mode: tests/failure/test_degrade.py, tests/failure/test_snapshot_failure.py
+- Audit: tests/api/test_audit.py. Operability: tests/api/test_operability.py, test_degrade.py
+- Review fixes 1, 2, 4, 12, 9, 5 done (handoff/registry-review.md): commits 809b877, 755ecf2, d9ba664, 37150b4, 4f7ea53, d035b6c
 
 ## Checks
   lint   pass   0.1s
   types  pass   0.2s
-  test   pass   4.6s   (93 passed)
+  test   pass   5.4s   (99 passed)
   eval   skip   0.0s
 
 ## Open
-1. `get_pipeline` still raises NotImplementedError: real submit returns 500 until vetting merges (integration wires it).
-2. Open the area PR once the user says so.
+1. Integration: wire `get_pipeline` (real submit returns 500 until then); lead fills `interfaces.Store` (review 8) and confirms one policy-version source (review 10).
+2. Deferred, see the review: 6 and 11 to the roadmap; 7 for operate.md; 9 import-time app build; 13 accepted.
+3. Open the area PR when the user says so.
 
 ## Decisions and corrections
-- User: `get_identity` taking the header is not a contract change. Work through the brief without check-ins; commit each green route.
-- Degraded marker is in headers (`X-Greenroom-Degraded`, `X-Greenroom-Generated-At`) so the body stays upstream format. No expiry (spec's first move).
-- Store methods live on `store.SqlStore`; `interfaces.Store` left empty (outside my folders).
-- Paging is done in Python over the full published list, same code for DB and snapshot.
+- `get_identity` taking the header is not a contract change. Work the brief without check-ins; commit each green route.
+- Degraded marker in headers (`X-Greenroom-Degraded`, `X-Greenroom-Generated-At`); body stays upstream. No expiry.
+- Store methods on `store.SqlStore`; paging in Python over the full list, same code for DB and snapshot.
+- User's decisions on the review, per finding, are in handoff/registry-review.md.
 
 ## Question at the impasse
 none
 
 ## Next step
-Ask the user whether to open the pull request (`open-area-pr` skill).
+User runs /open-area-pr.
