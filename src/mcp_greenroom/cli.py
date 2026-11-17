@@ -4,6 +4,7 @@ import json
 import sys
 import unicodedata
 from pathlib import Path
+from urllib.parse import quote
 from typing import Annotated, Any, NoReturn
 
 import httpx
@@ -249,6 +250,24 @@ def submit(
             "Pass a JSON file with 'server' and 'tools'.",
         )
     body = _call("POST", "/submissions", api, token, as_json, json=payload)
+    raise typer.Exit(_exit_code(body) if as_json else _show_decision(body))
+
+
+IdArgument = Annotated[str, typer.Argument(help="Submission id, as submit printed it.")]
+
+
+@app.command()
+def status(
+    submission_id: IdArgument,
+    api: ApiOption = None,
+    token: TokenOption = None,
+    as_json: JsonOption = False,
+) -> None:
+    """Show a submission and its decision.
+
+    Example: mcp-greenroom status 3f2c9a1e-...
+    """
+    body = _call("GET", f"/submissions/{quote(submission_id, safe='')}", api, token, as_json)
     raise typer.Exit(_exit_code(body) if as_json else _show_decision(body))
 
 
