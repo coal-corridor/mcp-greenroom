@@ -4,13 +4,20 @@ Every refusal carries a stable rule id and a message in three parts: what failed
 was received (escaped, truncated), what to do. The received value is untrusted text.
 """
 
+import json
 import re
+from functools import cache
+from pathlib import Path
 from typing import Any
+
+import jsonschema
+from jsonschema.exceptions import best_match
 
 from mcp_greenroom.interfaces import Refusal
 from mcp_greenroom.models import Submission
 
 MAX_RECEIVED = 80
+SCHEMA_PATH = Path(__file__).resolve().parents[3] / "contracts" / "server.schema.json"
 
 # One exact version: digits first (an optional "v"), dot-separated numbers, then an optional
 # pre-release or build suffix. Refuses tags ("latest", "next"), ranges and wildcards.
@@ -53,6 +60,26 @@ def _check_versions(server: dict[str, Any]) -> None:
             )
 
 
+@cache
+def _schema_validator() -> jsonschema.Draft7Validator:
+    schema = json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
+    return jsonschema.Draft7Validator(schema)
+
+
+def _check_schema(server: dict[str, Any]) -> None:
+    error = best_match(_schema_validator().iter_errors(server))
+    if error is None:
+        return
+    where = "/" + "/".join(str(part) for part in error.absolute_path)
+    raise _refuse(
+        "validation.schema",
+        f"Server manifest does not fit the schema at {where}: the '{error.validator}' rule failed",
+        error.instance,
+        "Fix server.json against contracts/server.schema.json (2025-12-11) and submit again.",
+    )
+
+
 def validate(submission: Submission) -> None:
     """Raise Refusal when the submission breaks a step-1 rule. Return None when it passes."""
     _check_versions(submission.server)
+    _check_schema(submission.server)
