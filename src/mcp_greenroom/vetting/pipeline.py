@@ -7,6 +7,7 @@ from datetime import UTC, datetime
 from mcp_greenroom.config import Settings
 from mcp_greenroom.interfaces import ClassifierProvider, Scanner
 from mcp_greenroom.models import Decision, Outcome, Reason, Submission
+from mcp_greenroom.vetting.validation import validate
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,8 @@ class VettingPipeline:
         self.clock = clock
 
     def vet(self, submission: Submission) -> Decision:
+        # Step 1. Malformed, not pinned, source not allowed, no tools: Refusal (422).
+        validate(submission)
         return Decision(
             outcome=Outcome.HUMAN_REVIEW,
             tier=None,
