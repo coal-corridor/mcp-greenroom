@@ -68,3 +68,15 @@ def test_the_samples_have_no_hidden_characters(slug: str) -> None:
 def test_only_the_tool_with_the_hidden_character_is_named() -> None:
     tools = [Tool(name="clean", description="Fine."), Tool(name="dirty", description="x​y")]
     assert [f.tool_name for f in hidden_characters(tools)] == ["dirty"]
+
+
+INVISIBLE_LETTERS = ["ㅤ", "ﾠ", "ᅟ", "ᅠ", "⠀", "឴", "឵"]
+
+
+@pytest.mark.parametrize(
+    "char", INVISIBLE_LETTERS, ids=[f"U+{ord(c):04X}" for c in INVISIBLE_LETTERS]
+)
+def test_an_invisible_letter_is_a_hidden_character(char: str) -> None:
+    findings = hidden_characters([Tool(name="t", description=f"Visible{char}text.")])
+    assert [f.rule_id for f in findings] == ["rule.hidden_characters"]
+    assert f"U+{ord(char):04X}" in findings[0].evidence
