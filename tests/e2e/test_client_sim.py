@@ -92,3 +92,22 @@ def test_unusable_registry_reply_blocks_every_server(response: httpx.Response) -
 
     assert {v.server for v in verdicts} == {"payments", "notes"}
     assert not any(v.allowed for v in verdicts)
+
+
+def test_server_listed_on_a_later_page_is_allowed() -> None:
+    payments = _record(
+        "com.examplebank/payments-readonly", "npm", "@examplebank/payments-readonly-mcp"
+    )
+    other = _record("com.examplebank/other", "npm", "@examplebank/other-mcp")
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.params.get("cursor") == "page-2":
+            return httpx.Response(200, json={"servers": [payments], "metadata": {"count": 1}})
+        body = {"servers": [other], "metadata": {"count": 1, "nextCursor": "page-2"}}
+        return httpx.Response(200, json=body)
+
+    registry = httpx.Client(base_url="http://registry.test", transport=httpx.MockTransport(handler))
+
+    allowed = {v.server for v in check_config(AMP_CONFIG, registry) if v.allowed}
+
+    assert allowed == {"payments"}
