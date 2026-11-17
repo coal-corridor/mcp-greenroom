@@ -59,7 +59,7 @@ Drawn from `docs/spec-notes.md` section 2. Each names what the slice gave up.
 - **Scanner as evidence, own classifier for the decision.** Given up: a single vendor tool for the whole check. The scanner returns no score and no capability tags, so it cannot drive tiers.
 - **A last-good copy on the read path.** Given up: freshness while the store is down. The copy has no expiry.
 
-`TODO(user)`: these four are taken from your spec notes. Keep, cut or rewrite them in your own words?
+These four are kept as drafted. They come from the spec notes prepared before the build, listed in `agentic-workflow.md`, section 2.
 
 ## Security and privacy
 
