@@ -43,3 +43,23 @@ def test_the_five_named_samples_are_there_and_one_stays_unrecorded() -> None:
         UNRECORDED,
         "ambiguous-exporter",
     }
+
+
+def test_every_case_and_sample_tool_has_a_recording_except_unrecorded_reporter() -> None:
+    from pathlib import Path
+
+    from evals.cases import load_sample
+    from evals.record import targets
+
+    from mcp_greenroom.risk.replay import ReplayProvider
+
+    replay = ReplayProvider(Path("evals/recordings"))
+    missing = []
+    for tool in targets():
+        try:
+            replay.classify(tool)
+        except Exception as exc:  # NoRecording or ClassifierUnavailable
+            missing.append(f"{tool.name}: {type(exc).__name__}")
+    assert missing == []
+    assert {c.tool.name for c in CASES} <= {t.name for t in targets()}
+    assert not {t.name for t in load_sample(UNRECORDED).tools} & {t.name for t in targets()}
