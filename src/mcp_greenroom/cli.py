@@ -259,10 +259,9 @@ def list_servers(
     out = stdout_console()
     if degraded_since:
         out.print(
-            Text(
-                f"! degraded: the registry serves its last-good copy from {degraded_since}.",
-                style="yellow",
-            )
+            Text("! degraded: the registry serves its last-good copy from ", style="yellow")
+            .append(inert(degraded_since))
+            .append(".")
         )
     for record in records:
         server = record.get("server") or {}

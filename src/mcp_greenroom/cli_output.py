@@ -49,7 +49,10 @@ def fail(what: str, received: str, todo: str, code: int = EXIT_FAILURE) -> NoRet
 
 
 def next_step(step: str) -> None:
-    stdout_console().print(Text(f"Next: {step}", style="dim"))
+    """One dim line naming the next step. Printed inert: it can carry an id from the API."""
+    line = Text("Next: ").append(inert(step))
+    line.stylize("dim")
+    stdout_console().print(line)
 
 
 # Control, format (zero-width, bidi), private, surrogate, unassigned, line and paragraph separators.
