@@ -52,6 +52,15 @@ class Policy:
 MAX_EVIDENCE = 2000
 
 
+MAX_LOGGED_DETAIL = 300
+
+
+def _log_failure(event: str, exc: Exception, **fields: str) -> None:
+    """Log the error type and its escaped message; tool_name is hashed by log_event."""
+    detail = ascii(str(exc)[:MAX_LOGGED_DETAIL])[1:-1]
+    log_event(event, logging.WARNING, error=type(exc).__name__, detail=detail, **fields)
+
+
 def _now() -> datetime:
     return datetime.now(UTC)
 
@@ -211,7 +220,8 @@ class VettingPipeline:
         """Scanner findings, and whether the scan failed. Evidence only."""
         try:
             findings = list(self.scanner.scan(tools))
-        except Exception:  # ScannerError, or anything else: fail closed
+        except Exception as exc:  # ScannerError, or anything else: fail closed
+            _log_failure("vetting.scanner_failed", exc)
             return [], True
         if not all(isinstance(f, Finding) for f in findings):
             return [], True
@@ -235,7 +245,8 @@ class VettingPipeline:
                         tool_name=tool.name,
                     )
                 )
-            except Exception:  # ClassifierUnavailable, or anything else: fail closed
+            except Exception as exc:  # ClassifierUnavailable, or anything else: fail closed
+                _log_failure("vetting.classifier_failed", exc, tool_name=tool.name)
                 misses.append(
                     Reason(
                         code="classifier.unavailable",
