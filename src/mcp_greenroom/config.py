@@ -7,7 +7,8 @@ Every setting has a safe default: the slice runs with none set. Names match
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, ValidationError, model_validator
+from pydantic_core import ErrorDetails
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from mcp_greenroom.models import Identity, Role
@@ -56,7 +57,39 @@ class Settings(BaseSettings):
 
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
 
+    @model_validator(mode="after")
+    def _check_cross_field(self) -> "Settings":
+        if self.approve_threshold >= self.reject_threshold:
+            raise ValueError(
+                f"{ENV_PREFIX}APPROVE_THRESHOLD ({self.approve_threshold}) must be below "
+                f"{ENV_PREFIX}REJECT_THRESHOLD ({self.reject_threshold})"
+            )
+        if self.risk_provider == "live" and (not self.model or self.model_api_key is None):
+            raise ValueError(
+                f"{ENV_PREFIX}RISK_PROVIDER=live needs {ENV_PREFIX}MODEL and "
+                f"{ENV_PREFIX}MODEL_API_KEY set"
+            )
+        return self
+
+
+_SECRET_FIELDS = {"token", "model_api_key"}
+
+
+def _describe(error: ErrorDetails) -> str:
+    field = str(error["loc"][0]) if error["loc"] else ""
+    if not field:  # cross-field rule: the message names the variables
+        return error["msg"].removeprefix("Value error, ")
+    received = "<hidden>" if field in _SECRET_FIELDS else repr(error["input"])
+    return f"{ENV_PREFIX}{field.upper()}: {error['msg']}. Received {received}"
+
 
 def load_settings(env_file: str | None = ".env") -> Settings:
     """Read and validate the configuration. Raises ConfigError on any bad value."""
-    return Settings(_env_file=env_file)  # type: ignore[call-arg]
+    try:
+        return Settings(_env_file=env_file)  # type: ignore[call-arg]
+    except ValidationError as exc:
+        problems = "; ".join(_describe(error) for error in exc.errors())
+        raise ConfigError(
+            f"Invalid configuration: {problems}. "
+            "Fix the variable in the environment or in .env (see .env.example), then start again."
+        ) from None
