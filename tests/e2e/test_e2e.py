@@ -1,10 +1,9 @@
 """End to end: the CLI drives the main samples through the real app over localhost HTTP.
 
-The app runs with the contracts FakePipeline (tests/e2e/fake_service.py) until vetting merges.
-Skipped only while mcp_greenroom/api/main.py is absent (area/registry merges it).
+The app is make run's app with the real pipeline (replayed classifier, YARA scanner), on a
+temporary database and snapshot. No dependency override.
 """
 
-import importlib.util
 import json
 import socket
 import threading
@@ -14,23 +13,31 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import uvicorn
+from fastapi import FastAPI
 from typer.testing import CliRunner
 
-# Skip only while the module is absent. Once it exists, any import error fails the test.
-if importlib.util.find_spec("mcp_greenroom.api.main") is None:
-    pytest.skip("the API is not merged on this branch yet", allow_module_level=True)
-
-import uvicorn  # noqa: E402
-
-from mcp_greenroom import cli  # noqa: E402
-from mcp_greenroom.cli import app  # noqa: E402
-from tests.e2e.fake_service import build_app  # noqa: E402
+from mcp_greenroom import cli
+from mcp_greenroom.api.main import create_app
+from mcp_greenroom.cli import app
+from mcp_greenroom.config import Settings
 
 ROOT = Path(__file__).resolve().parents[2]
 SAMPLES = ROOT / "sample-data" / "servers"
 AMP_CONFIG = ROOT / "sample-data" / "client-configs" / "amp-settings.json"
 
 runner = CliRunner()
+
+
+def build_app(data_dir: Path) -> FastAPI:
+    return create_app(
+        Settings(  # type: ignore[call-arg]
+            _env_file=None,
+            database_url=f"sqlite:///{data_dir / 'greenroom.db'}",
+            snapshot_path=data_dir / "last-good.json",
+            recordings_dir=ROOT / "evals" / "recordings",
+        )
+    )
 
 
 def _free_port() -> int:
