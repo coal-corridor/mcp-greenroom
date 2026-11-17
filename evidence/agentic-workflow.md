@@ -18,7 +18,7 @@ The harness is committed in the repo, so the panel can read what steered the age
 - `.claude/agents/`: one read-only reviewer subagent.
 - `.claude/skills/`: seven project skills. Claude starts `verify-change`, `tdd-behaviour`, `write-evidence` and `handoff`. I start `/review-area`, `/open-area-pr` and `/record-classifier`, because they review, push or call a model.
 
-The plan also named the built-in `/code-review` and `/security-review` for integration, and the `claude-api` skill for the live provider. `TODO(user)`: were `/code-review` and `/security-review` run on `integration`, and was the `claude-api` skill used? Was any other skill or plugin enabled? Please paste the plugin list and the "Setting sources" line from `/status`.
+The plan also named the built-in `/code-review` and `/security-review` for integration, and the `claude-api` skill for the live provider. The user ran `/security-review` on `integration` at 16:05; `/code-review` was not run, cut for time by the user (`handoff/integration-review.md`). `TODO(user)`: was the `claude-api` skill used? Was any other skill or plugin enabled? Please paste the plugin list and the "Setting sources" line from `/status`.
 
 ## 2. Prepared in advance
 
@@ -45,7 +45,7 @@ What happened. Commits per scope at `f117754`: setup 14, contracts 16, registry 
 1. **Frame**, brief 00, 13:38 to 14:08, lead. Lockfile and empty package, a check script with its test stage still failing, the network guard and structure tests, the CI workflow. Pull request 1 opened at 14:10, run 44008340480 green.
 2. **Contracts**, brief 10, 14:08 to 14:27, lead. Pinned upstream documents (`f343f5d`), shared models, config, logging, fingerprint, seams, five samples, fakes, each red then green. Frozen at `3e8f6e6`. Pull request 1 merged at 14:30 (`2ca2349`).
 3. **Build**, 14:35 to 15:45. Three area sessions in their own worktrees. They started together, not staggered as planned, because the build window was about half the planned one. Each worked one behaviour at a time as a red and a green commit, ran the reviewer, took the user's decision on each finding, and opened its pull request. Merged in order of completion: registry (#2, 15:12), edge (#3, 15:31), vetting (#4, 15:44), not the planned vetting, registry, edge.
-4. **Integrate**, brief 90, from 15:46, lead on branch `integration`. The real pipeline built once at startup and the fakes replaced in the end-to-end test (`9440b6f`, `50caca5`), `get_store` typed (`b328724`), the scanner pinned (`3414367`), a policy change without a new policy version stops startup (`d4516d1`), demo output saved, and a break test on two fresh clones with two fixes (`295941b`, `94dc6a4`).
+4. **Integrate**, brief 90, from 15:46, lead on branch `integration`. The real pipeline built once at startup and the fakes replaced in the end-to-end test (`9440b6f`, `50caca5`), `get_store` typed (`b328724`), the scanner pinned (`3414367`), a policy change without a new policy version stops startup (`d4516d1`), demo output saved, and a break test on two fresh clones with two fixes (`295941b`, `94dc6a4`). Then the integration reviews: `/review-area` and `/security-review` on `f117754`, recorded with the user's decisions at 16:14 (`868faee`), three review fixes test first and a scanner lock (16:14 to 16:17). Pull request 5 merged at 16:23 (`2b6ee66`), run 44023747644 green on all five jobs.
 5. **Evidence**, brief 95, on branch `evidence`, cut from `integration`, while the lead session finished the integration reviews. One commit per file, the first at 16:13.
 6. **Clean clone.** Two fresh clones in this pass, before and after the README commit. Both green (`verify.md`).
 
@@ -86,6 +86,7 @@ Drafted from `evidence/session-log.md`. `TODO(user)`: check each row, and add an
 | 15:16 | Gate failed on the reasons of `ambiguous-exporter` | Check outcome and tier only for that sample. No threshold moved | `d609a19` |
 | 15:39 | Secret scan red on 47 replay keys | Approved a `.gitleaks.toml` allowlist that needs both the recordings path and a 64-hex value | `eedd2ca` |
 | 15:03 to 15:28 | Three review reports, 37 findings | A decision on every finding | `handoff/*-review.md` |
+| 16:05 to 16:14 | Integration review, 6 findings and one point not verified | A decision on every finding, a lock on the scanner, `/code-review` cut for time | `868faee` |
 
 ## 6. How output was reviewed
 
@@ -94,10 +95,10 @@ What happened.
 - **Enforced.** The `Stop` hook ran lint, types and tests at the end of each agent turn; a second stop in a row passes with a warning. CI ran five jobs on every pull request and push to `main`. Deny and ask rules held throughout. Auto mode's safety check blocked one command at 15:39, which wrote a config file and downloaded the gitleaks binary in one step. Not enforced: no check is marked required, because the repository is private.
 - **Reported, not enforced.** The dependency audit: no finding after the two waivers.
 - **By me.** I merged all four pull requests by hand, on green, and decided every review finding. `TODO(user)`: which diffs and commit messages did you read line by line before merging?
-- **Independent.** The reviewer subagent, once per area, started with `/review-area`, given the parent spec, the area's child spec and the diff. 37 findings, 6 High, all High fixed. Counts per area are in `verify.md`.
+- **Independent.** The reviewer subagent, once per area and once on `integration`, started with `/review-area`, given the parent spec, the child spec and the diff. Areas: 37 findings, 6 High, all High fixed. Integration: 6 findings, none High, and one point it could not verify (scanner thread safety). The built-in `/security-review` over `main...integration` reported no vulnerabilities; no finding reached its 80% confidence bar. `/code-review` was not run. Counts and decisions are in `verify.md`.
 - **Caught late.** A command chain that hid the exit code let a failing check be committed in three sessions: lead (`9b3d50f`, fixed in `ffa1567`), vetting (two tier commits, fixed in `22da938`) and edge (`3c735e5`, fixed in `f6e0bd5`). The next check caught each one after the commit, not before.
 - **Caught by tests and CI.** A unit test caught a provider answering for the wrong tool, which led to approval (`9e460f6`). CI caught a difference the local run missed: Typer forces colour in `--help` under `GITHUB_ACTIONS` (`500774a`).
-- **By hand.** The lead session ran the break test from two fresh clones, with a script that prints each command, its output and exit code (`evidence/raw/break-test.txt`). It found two unclear messages, fixed test first. This pass drove the running service with `curl` (`operate.md`).
+- **By hand.** The lead session ran the break test from two fresh clones, with a script that prints each command, its output and exit code (`evidence/raw/break-test.txt`). Run 1 at `a32cf5f` found no stack trace and two unclear messages: a missing file and broken JSON gave the same message naming only the exception class, and a list with the store down and no last-good copy said "nothing can be submitted or decided". Both were fixed test first (`47f113a` red, `295941b` and `94dc6a4` green), and run 2 at `94dc6a4` confirmed them. One weak message was left as is: a JSON array as the body. This pass drove the running service with `curl` (`operate.md`).
 - **Documents.** Every evidence file in this pass is written from commands run in it, including two fresh clones.
 
 | Finding | Accepted or rejected | Why | Commit |
@@ -110,7 +111,14 @@ What happened.
 | Vetting 4: thresholds can change without the policy version | Deferred to integration | `config.py` is frozen; the lead decides | `d4516d1` in part; the rest in `ROADMAP.md` |
 | Edge 3: client check ignores the version | Accepted as is | Follows the spec, which mirrors the client's documented check | `ROADMAP.md` |
 | Edge 2 and vetting 12: files edited outside the area | Accepted as is | Approved in the session | |
-| The other 26 | See the review files | Each has a recorded decision | `handoff/*-review.md` |
+| Integration 1: tests in `api/`, `e2e/` and `failure/` read the shell's settings, the key included | Accepted, fixed | | `485c8b3`, `778aeb2` |
+| Integration 3: a pipeline that cannot be built gives a traceback and loses degrade mode | Accepted, fixed in its small version | Serving the last-good list without a pipeline went to the roadmap | `cd404d3`, `32004b2` |
+| Integration 4: main path test did not check "by policy" | Accepted, fixed | | `fb0260c` |
+| Integration, not verified: scanner shared across threads | Lock added; listed as not verified | | `6e5c5dd`, `6332a84` |
+| Integration 2: two policies can share one version | Accepted as a known gap | Already on the roadmap | |
+| Integration 5: `get_store` returns the concrete store | Accepted; docstrings corrected | | `d416b30` |
+| Integration 6: `read_submission` loosely typed, branches untested | Deferred | Roadmap | `2399081` |
+| The other 26 area findings | See the review files | Each has a recorded decision | `handoff/*-review.md` |
 
 ## 7. Timeline
 
@@ -121,7 +129,7 @@ From the time ledger in `session-log.md`. One sitting. No phase was replayed.
 | Frame and contracts | 0:00 to 0:20 | 13:38 | 14:27 | 49 minutes: setup 30, contracts 19 |
 | Merge of pull request 1, worktrees, area plans | | 14:27 | 14:35 | 8 minutes |
 | Build | 0:20 to 1:50 | 14:35 | 15:45 | 70 minutes, three sessions in parallel |
-| Integrate and review | 1:50 to 2:25 | 15:46 | `TODO(user)` | Last integration commit at 16:00 (`f117754`); the integration reviews were still running when the evidence pass began |
+| Integrate and review | 1:50 to 2:25 | 15:46 | `TODO(user)` | Break test fixes by 16:00 (`f117754`), review fixes by 16:18 (`b6a8acc`), pull request 5 merged at 16:23. Overlapped with the evidence pass |
 | Evidence | 2:25 to 2:55 | `TODO(user)` | | First evidence commit at 16:13 |
 | Clean clone | 2:55 to 3:00 | | | Two fresh clones, 16:09 and after 16:17 |
 
