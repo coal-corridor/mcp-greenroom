@@ -1,0 +1,16 @@
+{
+  "answer": "",
+  "description_sha256": "a33664d9f04695a3b2e5b303aecc42235700afe4854d677129a74de78f57212a",
+  "format": 1,
+  "key": "78981dfcd9e4c935d21664211044e4bc86d95f19e2e7865355f6abebbb44f6ab",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:08:50.041708Z",
+  "stop_reason": "refusal",
+  "tool_name": "note_sync",
+  "usage": {
+    "input_tokens": 1317,
+    "output_tokens": 0
+  }
+}

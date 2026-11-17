@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only listing of account payments from the server's own backend and contains no instructions aimed at a model.\"}",
+  "description_sha256": "cf6c1cd5b1068bfc9d6f520d53cc5f30b949aca38d774f6ad4fa9ccb35a8cd6b",
+  "format": 1,
+  "key": "a820de119d033793698d949aa813fc7ff7c8c822f366477a0a9fb4f035991acc",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:09:28.741981Z",
+  "stop_reason": "end_turn",
+  "tool_name": "list_payments",
+  "usage": {
+    "input_tokens": 1292,
+    "output_tokens": 70
+  }
+}

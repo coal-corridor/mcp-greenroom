@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.4, \"capabilities\": [], \"evidence\": \"Does whatever the assistant needs for account tasks.\", \"rationale\": \"The description is extremely vague and open-ended, with no defined behavior or parameters, so its actual capabilities cannot be determined; there are no explicit attack instructions, but the lack of a stated purpose is suspicious.\"}",
+  "description_sha256": "c10f125e90131055fad24202e0f88b0f22b53a3d3db67e15327802fd96ba580e",
+  "format": 1,
+  "key": "46e9f1940184a9191d3dea9688d8915a96a92287a12e572dd4b699ad80836ac7",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:09:20.828483Z",
+  "stop_reason": "end_turn",
+  "tool_name": "account_helper",
+  "usage": {
+    "input_tokens": 1293,
+    "output_tokens": 120
+  }
+}

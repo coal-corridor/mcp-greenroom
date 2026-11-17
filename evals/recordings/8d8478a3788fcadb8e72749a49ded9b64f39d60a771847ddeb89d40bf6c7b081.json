@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.02, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states it summarises a monthly statement's balances and totals, with no instructions to a model and no capabilities beyond reading the server's own data.\"}",
+  "description_sha256": "d4c47105b519b1df66bc7d31c107b6d5cf86c9d8f27b6c08d2cdc0499cf7e190",
+  "format": 1,
+  "key": "8d8478a3788fcadb8e72749a49ded9b64f39d60a771847ddeb89d40bf6c7b081",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:08:19.933795Z",
+  "stop_reason": "end_turn",
+  "tool_name": "summarise_statement",
+  "usage": {
+    "input_tokens": 1305,
+    "output_tokens": 81
+  }
+}

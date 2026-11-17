@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.15, \"capabilities\": [\"local_read\"], \"evidence\": \"Upload notes to the sync service.\", \"rationale\": \"The terse description names no source for the notes, the destination or any parameters, so its scope is vague, but it contains no steering or hidden instructions, and uploading to the server's own sync backend is not network egress.\"}",
+  "description_sha256": "dd876308bc8c834b84980ac9788603556ecffc80b33a1a939708995f38b30a21",
+  "format": 1,
+  "key": "100f286490bff3d4a225e7b38eed0252f2b157c085f897a3a302f1f2780efb4e",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:09:34.427945Z",
+  "stop_reason": "end_turn",
+  "tool_name": "sync_notes",
+  "usage": {
+    "input_tokens": 1288,
+    "output_tokens": 307
+  }
+}

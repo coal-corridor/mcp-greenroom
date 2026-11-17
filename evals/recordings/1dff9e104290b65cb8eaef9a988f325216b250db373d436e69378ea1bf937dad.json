@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a pure mortgage payment calculation with no instructions aimed at a model and no access to files, secrets or network.\"}",
+  "description_sha256": "5fac111fa6f6297c5f0cda91be33e7cf71bb34e3050d8f6054fea45fa46c5466",
+  "format": 1,
+  "key": "1dff9e104290b65cb8eaef9a988f325216b250db373d436e69378ea1bf937dad",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:08:35.853652Z",
+  "stop_reason": "end_turn",
+  "tool_name": "calc_mortgage",
+  "usage": {
+    "input_tokens": 1306,
+    "output_tokens": 74
+  }
+}

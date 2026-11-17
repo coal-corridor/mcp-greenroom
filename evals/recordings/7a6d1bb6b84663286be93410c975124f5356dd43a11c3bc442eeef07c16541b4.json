@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.1, \"capabilities\": [\"network_egress\"], \"evidence\": \"\", \"rationale\": \"The tool plainly states that it sends a finance report to a URL the caller chooses, which is network egress, and it contains no hidden instructions or deceptive wording.\"}",
+  "description_sha256": "a534994bfa483c277f3c7f56c53a9a3ee88ee84f11dd0bcf58bf953bd8e90882",
+  "format": 1,
+  "key": "7a6d1bb6b84663286be93410c975124f5356dd43a11c3bc442eeef07c16541b4",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:09:22.721720Z",
+  "stop_reason": "end_turn",
+  "tool_name": "export_report",
+  "usage": {
+    "input_tokens": 1301,
+    "output_tokens": 90
+  }
+}

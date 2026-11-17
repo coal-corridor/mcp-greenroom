@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a benign lookup of bank holidays, with no instructions to the model and no sensitive capabilities.\"}",
+  "description_sha256": "536304917cda9d545ae352f3aaf54118a0a7725d2c9f3d320ab72f631f82bfd9",
+  "format": 1,
+  "key": "6d091d9d687eaa5e37b2f647aed8ece9c896fc71c89512c7cb8c28ac5b4fbbe1",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:08:17.485988Z",
+  "stop_reason": "end_turn",
+  "tool_name": "holiday_calendar",
+  "usage": {
+    "input_tokens": 1294,
+    "output_tokens": 71
+  }
+}

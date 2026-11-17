@@ -1,0 +1,16 @@
+{
+  "answer": "",
+  "description_sha256": "f45abd2f7590a6962b6155dd359e19ef0d81d29e5da25f3a563d11eb1d549c6f",
+  "format": 1,
+  "key": "1591be19ec563408f1162c89e8f9e2f7902a05a0fc75b644a62c84b8e4517de1",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:08:53.752709Z",
+  "stop_reason": "refusal",
+  "tool_name": "branch_weather",
+  "usage": {
+    "input_tokens": 1360,
+    "output_tokens": 0
+  }
+}

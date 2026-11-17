@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.02, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only balance lookup against the server's own backend, with no instructions aimed at a model and no unneeded access.\"}",
+  "description_sha256": "9517cf6de45e38c1b4c10c7c17ec54a715d9f91a2cb793edde5614f7ae753a76",
+  "format": 1,
+  "key": "b27bf6808d946f08874fff0f1d662423f86cc06eafea1674f7fb52ee4337f196",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:09:26.701946Z",
+  "stop_reason": "end_turn",
+  "tool_name": "get_balance",
+  "usage": {
+    "input_tokens": 1292,
+    "output_tokens": 75
+  }
+}

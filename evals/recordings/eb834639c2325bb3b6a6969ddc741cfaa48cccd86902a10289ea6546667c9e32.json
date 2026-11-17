@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.02, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"A plain read-only listing of an account's standing orders from the server's own backend, with no instructions aimed at a model and no access to the local machine, secrets or arbitrary destinations.\"}",
+  "description_sha256": "952950c50ea54bcfc22812bf19795a58765d397cfac88bad4bcf76c08220588b",
+  "format": 1,
+  "key": "eb834639c2325bb3b6a6969ddc741cfaa48cccd86902a10289ea6546667c9e32",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:08:26.417982Z",
+  "stop_reason": "end_turn",
+  "tool_name": "list_standing_orders",
+  "usage": {
+    "input_tokens": 1300,
+    "output_tokens": 90
+  }
+}

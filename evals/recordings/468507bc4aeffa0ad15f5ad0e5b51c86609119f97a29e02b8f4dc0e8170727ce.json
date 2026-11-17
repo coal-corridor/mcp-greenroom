@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a benign BIC validation and bank lookup, with no instructions to a model and no reads, writes, secrets or outbound data transfer.\"}",
+  "description_sha256": "f2457fb237d5355b3737a3f8d2b26d096b857fa9639d8b1d29878cbc09b73211",
+  "format": 1,
+  "key": "468507bc4aeffa0ad15f5ad0e5b51c86609119f97a29e02b8f4dc0e8170727ce",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:08:23.890468Z",
+  "stop_reason": "end_turn",
+  "tool_name": "validate_bic",
+  "usage": {
+    "input_tokens": 1304,
+    "output_tokens": 82
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only lookup of bank branch information from the server's own data, with no instructions aimed at a model and no sensitive access.\"}",
+  "description_sha256": "2e7ee0b831fdd395425432317560c611d90c450f9ec1100f2ca8be999e5248c1",
+  "format": 1,
+  "key": "5a5ca7841bd8d9ec93dcc8872a9a5d5c28f61abb6d47769563142ac46d4fa55b",
+  "model_id": "claude-opus-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:08:05.234830Z",
+  "stop_reason": "end_turn",
+  "tool_name": "list_branches",
+  "usage": {
+    "input_tokens": 1295,
+    "output_tokens": 78
+  }
+}
