@@ -178,3 +178,34 @@ def test_step_6_a_scanner_that_fails_sends_to_human_review() -> None:
     decision = VettingPipeline(provider, BrokenScanner(), POLICY).vet(submission)
     assert decision.outcome is Outcome.HUMAN_REVIEW
     assert codes(decision) == ["scanner.unavailable"]
+
+
+# Step 7. Tier medium or high: human review.
+
+
+@pytest.mark.parametrize(
+    ("capabilities", "tier"),
+    [
+        ({"list_payments": [Capability.NETWORK_EGRESS]}, Tier.MEDIUM),
+        ({"get_balance": [Capability.CODE_EXEC]}, Tier.HIGH),
+        # The tier spans the server: one tool reads, another sends.
+        (
+            {
+                "get_balance": [Capability.LOCAL_READ],
+                "list_payments": [Capability.NETWORK_EGRESS],
+            },
+            Tier.HIGH,
+        ),
+    ],
+)
+def test_step_7_a_medium_or_high_tier_sends_to_human_review(
+    capabilities: dict[str, list[Capability]], tier: Tier
+) -> None:
+    submission = load_sample("payments-readonly")
+    results = low_results(submission) | {
+        name: risk(name, LOW_SCORE, *caps) for name, caps in capabilities.items()
+    }
+    decision = pipeline(results).vet(submission)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert decision.tier is tier
+    assert codes(decision) == [f"tier.{tier.value}"]
