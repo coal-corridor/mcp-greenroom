@@ -179,3 +179,44 @@ def test_list_warns_when_the_registry_is_degraded(monkeypatch: pytest.MonkeyPatc
     assert result.exit_code == 0, result.output
     assert "degraded" in result.stdout.lower()
     assert "2026-11-17T09:00:00Z" in result.stdout
+
+
+def _health(ready: bool) -> httpx.MockTransport:
+    def route(request: httpx.Request) -> httpx.Response:
+        path = request.url.path
+        if path == "/livez":
+            return httpx.Response(200, json={"alive": True})
+        if path == "/readyz" and ready:
+            return httpx.Response(200, json={"ready": True})
+        if path == "/readyz":
+            return httpx.Response(503, json={"ready": False, "reason": "store unavailable: disk"})
+        assert path == "/v0.1/servers"
+        headers = {} if ready else {"X-Greenroom-Degraded": "true"}
+        return httpx.Response(200, json={"servers": []}, headers=headers)
+
+    return api(route)
+
+
+def test_health_prints_liveness_readiness_and_registry_mode(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(cli, "TRANSPORT", _health(ready=True))
+
+    result = runner.invoke(app, ["health", *API])
+
+    assert result.exit_code == 0, result.output
+    lines = [line for line in result.stdout.splitlines() if not line.startswith("Next:")]
+    assert len(lines) == 3
+    assert "✓ live" in lines[0]
+    assert "✓ ready" in lines[1]
+    assert "normal" in lines[2]
+
+
+def test_health_exits_1_and_says_why_when_not_ready(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "TRANSPORT", _health(ready=False))
+
+    result = runner.invoke(app, ["health", *API])
+
+    assert result.exit_code == 1
+    assert "store unavailable: disk" in result.stdout
+    assert "degraded" in result.stdout
