@@ -54,7 +54,11 @@ def check_config(config_path: Path, registry: httpx.Client) -> list[Verdict]:
     servers: dict[str, dict[str, Any]] = json.loads(config_path.read_text(encoding="utf-8"))[
         SERVERS_KEY
     ]
-    listed = _listed(registry)
+    try:
+        listed = _listed(registry)
+    except httpx.HTTPError as exc:
+        reason = f"registry unreachable ({type(exc).__name__}), so every server is blocked"
+        return [Verdict(name, False, reason) for name in servers]
     verdicts = []
     for name, entry in servers.items():
         package = _package(entry)
