@@ -55,7 +55,8 @@ def test_main_path_through_the_real_pipeline(real_settings: Settings) -> None:
         assert response.status_code == 201, response.text
         body = response.json()
         assert (body["outcome"], body["tier"]) == ("approved", "low")
-        assert body["reasons"]
+        assert body["decided_by"] == "policy"  # approved by policy, not by a person
+        assert [reason["code"] for reason in body["reasons"]] == ["policy.tier_low"]
         assert elapsed < 5.0
         listed = client.get("/v0.1/servers").json()["servers"]
         assert [s["server"]["name"] for s in listed] == ["com.examplebank/payments-readonly"]

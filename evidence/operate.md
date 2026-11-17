@@ -107,6 +107,10 @@ The one key, `MCP_GREENROOM_MODEL_API_KEY`, is needed only for the recording run
 - **Recovery.** Restore the database and restart. A schema setup that failed at startup is not retried, so a restart is needed even after the database comes back. An empty database at startup overwrites the last-good copy with an empty list. Both are deferred (registry review 7, ROADMAP).
 - **Rollback of a decision.** None. An approved version cannot be withdrawn in the slice (ROADMAP Phase 2, item 6). The audit trail is append-only, enforced by database triggers.
 
+## Known gaps
+
+- Scanner thread safety: not verified. One scanner instance (the Cisco MCP Scanner's `StaticAnalyzer`) is built at startup and shared by every request thread. Whether the package is safe to share was not checked. The adapter holds a lock, so one scan runs at a time (`src/mcp_greenroom/scanner/yara.py`, test `tests/unit/test_scanner_lock.py`). Effect: concurrent submissions queue on the scan. Production route: confirm the package's thread safety, then drop the lock or keep a small pool of scanners.
+
 ## Local to cloud
 
 In words only. None of this was built. Sources: `docs/spec-notes.md` section 3, `deploy/README.md`, `ROADMAP.md` Phase 2 item 11.

@@ -72,8 +72,9 @@ class Pipeline(Protocol):
 
 
 class Store(Protocol):
-    """Persistence, owned by the registry area, which adds the methods in its pull request.
+    """Unused. Persistence is mcp_greenroom.store.SqlStore, and get_store returns it directly.
 
-    Declared here only so the injection point has a type. Never imported by vetting/, risk/
-    or scanner/.
+    Kept as part of the frozen contract; the user accepted returning SqlStore at integration
+    (handoff/integration-review.md, finding 5). Nothing under vetting/, risk/ or scanner/
+    imports the store.
     """

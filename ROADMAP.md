@@ -97,6 +97,8 @@ One line each. The finding and the user's decision are in the review file named.
 - Keep the degraded flag in `list --json` (edge review 6).
 - CLI errors that name the field, not the exception class (edge review 8).
 - `list` that fails visibly at the 1000-page cap instead of stopping silently (edge review 9).
+- Keep serving the last-good list when the pipeline cannot be built at startup; today startup stops with a clear message and nothing is served (integration review 3).
+- `read_submission` checks for a JSON object and returns `dict[str, Any]`, catches `RecursionError`, and has tests for the non-UTF-8 and other read-error branches (integration review 6).
 
 ## Future work
 

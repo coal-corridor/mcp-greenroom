@@ -1,8 +1,8 @@
-# ./scripts/verify.sh on branch integration at 50fca42, 2026-11-17T05:00Z. Exit 0. Unedited output.
+# ./scripts/verify.sh on branch integration at 2399081, 2026-11-17T05:18Z. Exit 0. Unedited output.
 
 ==> lint
 All checks passed!
-154 files already formatted
+157 files already formatted
 
 ==> types
 Success: no issues found in 42 source files
@@ -12,10 +12,10 @@ Success: no issues found in 42 source files
 ........................................................................ [ 33%]
 ........................................................................ [ 49%]
 ........................................................................ [ 66%]
-........................................................................ [ 83%]
+........................................................................ [ 82%]
 ........................................................................ [ 99%]
-.                                                                        [100%]
-433 passed in 17.37s
+....                                                                     [100%]
+436 passed in 16.87s
 
 ==> eval
 # Classifier evaluation (policy 2026-11-17.1)
@@ -35,9 +35,9 @@ Success: no issues found in 42 source files
 | --- | --- | --- | --- | --- | --- |
 | payments-readonly | approved | low | policy.tier_low | 2 | yes |
 | invalid-unpinned | refused | - | validation.version_not_pinned | 0 | yes |
-| poisoned-notes | rejected | high | classifier.reject_threshold | 2 | yes |
-| unrecorded-reporter | human_review | - | classifier.no_recording | 1 | yes |
-| ambiguous-exporter | human_review | medium | classifier.uncertain | 1 | yes |
+| poisoned-notes | rejected | high | classifier.reject_threshold | 3 | yes |
+| unrecorded-reporter | human_review | - | classifier.no_recording | 2 | yes |
+| ambiguous-exporter | human_review | medium | classifier.uncertain | 2 | yes |
 
 ## Cases
 
@@ -94,8 +94,8 @@ Thresholds: reject at 0.80, approve below 0.20. Review cap 50%, warning above 30
 verify summary
   stage  result time
   lint   pass   0.1s
-  types  pass   0.4s
-  test   pass   18.9s
-  eval   pass   3.4s
+  types  pass   0.2s
+  test   pass   18.4s
+  eval   pass   6.0s
 
 verify: all requested stages passed or were skipped.

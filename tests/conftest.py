@@ -1,5 +1,7 @@
 """Shared test setup.
 
+Settings guard: an autouse fixture removes every MCP_GREENROOM_* variable for each test.
+
 Network guard: any outbound connection, or DNS lookup, to a host other than
 localhost fails the test. Tests use the fakes under tests/, never a live call.
 The guard is installed in pytest_configure, so imports at collection time are
@@ -9,6 +11,7 @@ covered too.
 from __future__ import annotations
 
 import ipaddress
+import os
 import socket
 from typing import Any
 
@@ -70,6 +73,15 @@ def _guarded_getaddrinfo(host: Any, *args: Any, **kwargs: Any) -> Any:
     if not _is_local(host):
         raise _blocked("DNS lookup", host)
     return _real_getaddrinfo(host, *args, **kwargs)
+
+
+@pytest.fixture(autouse=True)
+def _clean_greenroom_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Every test runs on the defaults: no MCP_GREENROOM_* variable from the shell leaks in,
+    so no test can read MCP_GREENROOM_MODEL_API_KEY or build the live provider."""
+    for name in list(os.environ):
+        if name.startswith("MCP_GREENROOM_"):
+            monkeypatch.delenv(name)
 
 
 def pytest_configure(config: pytest.Config) -> None:

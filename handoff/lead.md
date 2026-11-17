@@ -1,39 +1,37 @@
-# Handoff: lead on lead/handoff
+# Handoff: lead on integration
 
-State at commit 2ca2349 (2026-11-17), the merge of PR #1 into main. Uncommitted files: none except this note.
+State at commit 284e000 (2026-11-17). Uncommitted files: none except this note. Branch not pushed.
 
 ## Goal
-Briefs 00 (check script, PR checks, guard rails) and 10 (shared shapes and seams, frozen) are both closed. Next lead phase: brief 90, integration, once the area PRs land.
+Brief 90: the three areas work together on main, checked by the script, an independent review and a break test.
 
 ## Plan
-As approved: brief 00 items 1 to 6, then brief 10 items 1 to 7, in one setup PR. Corrections are under Decisions.
+As the user directed: wire the real pipeline, review-deferred items, vetting finding 4, roadmap, verify and demo, break test, then the user's review decisions in the order 1, 4, 3, scanner lock.
 
 ## Done
-- PR #1 merged as 2ca2349. CI run 44010204313 on 3e8f6e6: verify (quick|test|eval), secret scan and dependency audit all green.
-- Brief 00 tests: tests/structure/test_network_guard.py, tests/structure/test_source_rules.py.
-- contracts/: OpenAPI 2025-12-01 and server.schema.json 2025-12-11, pinned with sha256 (f343f5d).
-- Red then green, tests in tests/shared/: config (test_config.py, 2c75fb4), logging (test_logging.py, 266530f), fingerprint (test_fingerprint.py, caae224). Models aa22957, seams 8502a91.
-- sample-data/servers/: five samples plus an outcomes table (test_samples.py, 0eea3c2). Fakes: tests/fakes.py (test_fakes.py, 4dc232d).
-- CLAUDE.md line 24 names config.py and log_event (68cf5a3).
+- Real pipeline built once in create_app (50caca5, 32004b2), e2e on the real app, no fakes in demo: tests/api/test_pipeline_wiring.py, tests/e2e/test_e2e.py.
+- get_store returns SqlStore (b328724). Scanner pinned ==4.8.7 (3414367). One policy-version source confirmed (57027aa).
+- Policy change without a new version stops startup (d4516d1): tests/shared/test_config.py.
+- Break test from a fresh clone: evidence/raw/break-test.txt. Two unclear messages fixed (295941b, 94dc6a4).
+- Reviews and decisions: handoff/integration-review.md (868faee). /code-review cut for time.
+- Review fixes: env cleared for every test (tests/structure/test_env_isolation.py), main path "by policy" (fb0260c), pipeline build failure exits clearly (tests/failure/test_startup_pipeline.py), scanner lock (tests/unit/test_scanner_lock.py).
+- ROADMAP.md: deferred review items, hash-stamped version, last-good list without a pipeline, read_submission. operate.md: scanner thread safety as a known gap.
 
 ## Checks
-lint pass 0.7s, types pass 0.3s, test pass 0.7s (43 passed), eval skip 0.0s. Exit 0 on main at 2ca2349.
+lint pass 0.1s, types pass 0.2s, test pass 18.4s (436 passed), eval pass 6.0s (24% in review). Exit 0. Demo exit 0, 14 of 14 steps as expected. Saved in evidence/raw/.
 
 ## Open
-1. Wait for the area PRs (vetting, registry, edge). Review each against its spec with the reviewer agent.
-2. Brief 90 (integration), then brief 95 (evidence).
-3. When the repo goes public, the user makes verify (quick|test|eval) and secret scan required checks.
+1. The user runs /open-area-pr integration and merges.
+2. Brief 95 (evidence): README setup/run/check, verify.md from evidence/raw/, operate.md, decisions.md.
 
 ## Decisions and corrections
-- The repo is private. The user merges on green by hand. litellm advisories waived in [tool.uv.audit] (fabf418). Secret scan runs the pinned gitleaks 8.30.1 binary, not the action. delivery.md updated and decisions.md has a record (a6b4466).
-- Env names follow .env.example (RISK_PROVIDER, MODEL). recordings_dir defaults to evals/recordings.
-- Contracts frozen on 2026-11-17 at 3e8f6e6. unrecorded-reporter is excluded from the recording run (vetting.md and the record-classifier skill).
-- The schema refuses `latest` only on packages[].version. Vetting needs its own rule for the top-level version.
-- Not checked by tooling: mypy does not cover tests/, so nothing checks that the fakes match the protocols.
-- Check verify.sh's own exit code before every commit (9b3d50f slipped through `| tail`, fixed in ffa1567).
+- The user approved the frozen config.py change (startup policy check) and accepted get_store returning SqlStore.
+- Accepted gap: the policy check compares only with the defaults (ROADMAP, hash-stamped version).
+- With MCP_GREENROOM_* set in the shell, test collection still reads it: api/main.py builds the app at import (registry review 9, ROADMAP).
+- lead/handoff carried only this note, no evidence drafts.
 
 ## Question at the impasse
 none
 
 ## Next step
-Read briefs/90-integrate.md once the first area PR is open, and review that PR with the reviewer agent. This note lives on the local branch lead/handoff (not pushed, by the user's choice). When `integration` is created from main, run `git merge lead/handoff` there to carry it in.
+Wait for the user's /open-area-pr integration, then read briefs/95-evidence.md.
