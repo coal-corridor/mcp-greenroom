@@ -122,3 +122,28 @@ def test_every_command_has_help_with_one_example(command: str) -> None:
 
     assert result.exit_code == 0, result.output
     assert result.stdout.count("Example: mcp-greenroom") == 1
+
+
+def _crashing(request: httpx.Request) -> httpx.Response:
+    raise RuntimeError("boom inside the client")
+
+
+def test_unexpected_error_shows_no_stack_trace_without_debug(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(cli, "TRANSPORT", httpx.MockTransport(_crashing))
+
+    result = runner.invoke(app, ["status", "sub-1", "--api", "http://api.test"])
+
+    assert result.exit_code == 1
+    assert "Traceback" not in result.output
+    assert "Error:" in result.stderr
+    assert "--debug" in result.stderr
+
+
+def test_debug_lets_the_stack_trace_through(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "TRANSPORT", httpx.MockTransport(_crashing))
+
+    result = runner.invoke(app, ["--debug", "status", "sub-1", "--api", "http://api.test"])
+
+    assert isinstance(result.exception, RuntimeError)
