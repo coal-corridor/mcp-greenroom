@@ -85,17 +85,18 @@ def test_submit_json_prints_the_api_body_and_nothing_else(
     assert result.exit_code == {"payments-readonly": 0, "poisoned-notes": 20}[sample]
 
 
-def _refusal(rule_id: str, message: str) -> dict[str, Any]:
-    return {"detail": {"rule_id": rule_id, "message": message}}
+def _refusal(rule_id: str, message: str, **extra: str) -> dict[str, Any]:
+    """Error body as area/registry's api/errors.py writes it: flat rule_id and message."""
+    return {"rule_id": rule_id, "message": message, **extra}
 
 
 @pytest.mark.parametrize(
     ("status", "body", "code"),
     [
-        (422, _refusal("validation.version_not_pinned", "Version is not pinned."), 20),
+        (422, _refusal("validation.version_not_pinned", "Not pinned.", received="latest"), 20),
         (409, _refusal("registry.version_conflict", "Name and version already decided."), 20),
         (401, _refusal("auth.unknown_credential", "Authentication failed."), 1),
-        (500, {"detail": "Internal Server Error"}, 1),
+        (500, _refusal("internal.error", "The request failed inside MCP Greenroom."), 1),
     ],
     ids=["refused-422", "conflict-409", "unauthenticated-401", "server-error-500"],
 )
@@ -112,9 +113,9 @@ def test_submit_error_is_three_parts_on_stderr_with_exit_code(
     assert "Received:" in result.stderr
     assert "Next:" in result.stderr
     assert "Traceback" not in result.stderr
-    detail = body["detail"]
-    if isinstance(detail, dict):
-        assert detail["rule_id"] in result.stderr
+    assert body["rule_id"] in result.stderr
+    if "received" in body:
+        assert f"Received: {body['received']}" in result.stderr
 
 
 def test_unreachable_api_exits_1_without_a_stack_trace(monkeypatch: pytest.MonkeyPatch) -> None:
