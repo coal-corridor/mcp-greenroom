@@ -134,3 +134,48 @@ def test_audit_lists_time_actor_action_reasons_and_policy_version(
         assert text in result.stdout
     assert "Note\\u202e[b]x[/b]" in result.stdout
     assert json.loads(as_json.stdout) == body
+
+
+def _listing(degraded: bool) -> httpx.MockTransport:
+    pages = {
+        None: (
+            {"servers": [_server("payments-readonly", "1.2.0")], "metadata": {"nextCursor": "p2"}}
+        ),
+        "p2": ({"servers": [_server("ambiguous-exporter", "2.0.0")], "metadata": {}}),
+    }
+
+    def route(request: httpx.Request) -> httpx.Response:
+        assert (request.method, request.url.path) == ("GET", "/v0.1/servers")
+        headers = (
+            {"X-Greenroom-Degraded": "true", "X-Greenroom-Generated-At": "2026-11-17T09:00:00Z"}
+            if degraded
+            else {}
+        )
+        return httpx.Response(200, json=pages[request.url.params.get("cursor")], headers=headers)
+
+    return api(route)
+
+
+def _server(slug: str, version: str) -> dict[str, object]:
+    return {"server": {"name": f"com.examplebank/{slug}", "version": version}}
+
+
+def test_list_shows_every_approved_version_across_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "TRANSPORT", _listing(degraded=False))
+
+    result = runner.invoke(app, ["list", *API])
+
+    assert result.exit_code == 0, result.output
+    assert "com.examplebank/payments-readonly" in result.stdout
+    assert "com.examplebank/ambiguous-exporter" in result.stdout
+    assert "degraded" not in result.stdout.lower()
+
+
+def test_list_warns_when_the_registry_is_degraded(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(cli, "TRANSPORT", _listing(degraded=True))
+
+    result = runner.invoke(app, ["list", *API])
+
+    assert result.exit_code == 0, result.output
+    assert "degraded" in result.stdout.lower()
+    assert "2026-11-17T09:00:00Z" in result.stdout
