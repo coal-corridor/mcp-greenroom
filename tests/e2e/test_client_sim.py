@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import pytest
 
 from mcp_greenroom.client_sim import check_config
 
@@ -71,6 +72,23 @@ def test_unreachable_registry_blocks_every_server() -> None:
     registry = _failing(httpx.ConnectError("connection refused"))
 
     verdicts = check_config(AMP_CONFIG, registry)
+
+    assert {v.server for v in verdicts} == {"payments", "notes"}
+    assert not any(v.allowed for v in verdicts)
+
+
+@pytest.mark.parametrize(
+    "response",
+    [
+        httpx.Response(500, json={"title": "Internal Server Error"}),
+        httpx.Response(200, text="<html>not json</html>"),
+        httpx.Response(200, json={"items": []}),
+        httpx.Response(200, json={"servers": [{"server": {"packages": [{"identifier": 3}]}}]}),
+    ],
+    ids=["server-error", "not-json", "no-servers-key", "bad-package"],
+)
+def test_unusable_registry_reply_blocks_every_server(response: httpx.Response) -> None:
+    verdicts = check_config(AMP_CONFIG, _failing(response))
 
     assert {v.server for v in verdicts} == {"payments", "notes"}
     assert not any(v.allowed for v in verdicts)
