@@ -2,11 +2,13 @@
 
 import json
 import sys
+import unicodedata
 from pathlib import Path
 from typing import Annotated, Any, NoReturn
 
 import httpx
 import typer
+from rich import box
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
@@ -109,6 +111,41 @@ def main(ctx: typer.Context) -> None:
     out.print(f"[dim]Next: {NAME} --help, or {NAME} COMMAND --help[/dim]")
 
 
+# Control, format (zero-width, bidi), private, surrogate, unassigned, line and paragraph separators.
+_HIDDEN_CATEGORIES = frozenset({"Cc", "Cf", "Co", "Cs", "Cn", "Zl", "Zp"})
+
+
+def _escape_char(char: str) -> str:
+    point = ord(char)
+    if point < 0x100:
+        return f"\\x{point:02x}"
+    if point < 0x10000:
+        return f"\\u{point:04x}"
+    return f"\\U{point:08x}"
+
+
+def inert(value: object) -> Text:
+    """Untrusted text, safe to print: no markup is read, hidden characters are shown escaped."""
+    shown = "".join(
+        _escape_char(c) if unicodedata.category(c) in _HIDDEN_CATEGORIES else c for c in str(value)
+    )
+    return Text(shown)
+
+
+def _show_findings(out: Console, findings: list[dict[str, Any]]) -> None:
+    """A table of findings, then each finding's offending text on its own unwrapped line."""
+    table = Table(box=box.SIMPLE, show_edge=False, pad_edge=False)
+    for column in ("#", "rule", "source", "severity", "tool"):
+        table.add_column(column, overflow="fold")
+    for number, finding in enumerate(findings, start=1):
+        cells = (finding.get(key) or "" for key in ("rule_id", "source", "severity", "tool_name"))
+        table.add_row(str(number), *(inert(cell) for cell in cells))
+    out.print(table)
+    for number, finding in enumerate(findings, start=1):
+        if finding.get("evidence"):
+            out.print(Text(f"  [{number}] offending text: ").append(inert(finding["evidence"])))
+
+
 def _exit_code(body: dict[str, Any]) -> int:
     return OUTCOMES.get(str(body.get("outcome")), ("", "", EXIT_FAILURE))[2]
 
@@ -118,18 +155,17 @@ def _show_decision(body: dict[str, Any]) -> int:
     word, colour, code = OUTCOMES.get(str(body.get("outcome")), ("? unknown", "", EXIT_FAILURE))
     tier = body.get("tier") or "none"
     out = _out()
-    out.print(
-        Text.assemble(
-            (word, colour),
-            "  ",
-            str(body.get("name")),
-            " ",
-            str(body.get("version")),
-            f"  tier {tier}",
-        )
-    )
+    name = inert(f"{body.get('name')} {body.get('version')}")
+    out.print(Text.assemble((word, colour), "  ", name, f"  tier {inert(tier)}"))
     for reason in body.get("reasons") or []:
-        out.print(Text(f"  {reason.get('code')}: {reason.get('message')}"))
+        line = Text("  ").append(inert(reason.get("code"))).append(": ")
+        line.append(inert(reason.get("message")))
+        if reason.get("tool_name"):
+            line.append(" (tool ").append(inert(reason["tool_name"])).append(")")
+        out.print(line)
+    findings = body.get("findings") or []
+    if findings:
+        _show_findings(out, findings)
     _next(f"{NAME} status {body.get('submission_id')}")
     return code
 

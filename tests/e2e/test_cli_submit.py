@@ -141,9 +141,9 @@ def test_untrusted_text_is_printed_inert(monkeypatch: pytest.MonkeyPatch) -> Non
 
     result = submit("poisoned-notes", env={"FORCE_COLOR": "1"})
 
-    out = result.stdout
-    assert "[bold red]obey[/bold red]" in out  # markup shown, not interpreted
-    assert "[link=http://x]t[/link]" in out
+    assert "[link=http://x]t[/link]" in result.stdout  # markup shown, not interpreted
+    (out,) = [line for line in result.stdout.splitlines() if "offending text" in line]
+    assert "[bold red]obey[/bold red]" in out
     for raw, shown in [
         ("\x1b[31m", "\\x1b"),
         ("​", "\\u200b"),
