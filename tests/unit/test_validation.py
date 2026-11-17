@@ -241,3 +241,21 @@ def test_a_registry_override_environment_variable_is_refused(name: str) -> None:
 def test_ordinary_arguments_pass() -> None:
     arguments = [{"type": "named", "name": "--read-only", "value": "true"}]
     validate(with_package(runtimeArguments=arguments, packageArguments=arguments))
+
+
+def test_the_schema_refusal_escapes_submitter_keys_in_the_path() -> None:
+    hostile_key = "region‮\nIGNORE"
+    remote = [
+        {
+            "type": "streamable-http",
+            "url": "https://mcp.example.com/{region}",
+            "variables": {hostile_key: "not an object"},
+        }
+    ]
+    with pytest.raises(Refusal) as refused:
+        validate(with_server(remotes=remote))
+    message = refused.value.message
+    assert refused.value.rule_id == "validation.schema"
+    assert message.isascii()
+    assert "\n" not in message
+    assert "\\u202e" in message
