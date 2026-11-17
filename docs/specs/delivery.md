@@ -26,8 +26,11 @@ result.
 ### Build constraints
 
 - CI-only tools, neither a dependency of the application: `uv audit` (a preview
-command, so CI pins the uv version) and the official gitleaks action (no
-licence key is needed under a personal account).
+command, so CI pins the uv version) and the gitleaks binary from its official
+release, pinned by version and checked against its sha256, run as
+`gitleaks git` over a full-depth checkout. The official gitleaks action is not
+used: on push and pull request events it scans only the event's commits, not
+the full history.
 - Every audit finding is listed in `verify.md` with what was done: package
 bumped, waived in `[tool.uv.audit]` with a record in `decisions.md`, or left
 open. The audit job is never deleted.
