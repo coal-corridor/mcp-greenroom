@@ -4,6 +4,7 @@ Every setting has a safe default: the slice runs with none set. Names match
 .env.example. Invalid values stop startup with a ConfigError.
 """
 
+import os
 from pathlib import Path
 from typing import Literal
 
@@ -14,6 +15,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from mcp_greenroom.models import Identity, Role
 
 ENV_PREFIX = "MCP_GREENROOM_"
+
+# The scanner package imports litellm, which fetches a remote cost map on import unless this
+# is set. Tests, the check command and the default run make no network call (user-approved
+# change to this frozen module, vetting branch).
+os.environ.setdefault("LITELLM_LOCAL_MODEL_COST_MAP", "True")
 
 # Stub identities, dev environment only. Synthetic tokens, not secrets.
 # All three may submit; two are reviewers (separation of duties needs two).
