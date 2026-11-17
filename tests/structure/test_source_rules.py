@@ -17,29 +17,24 @@ def _source_files() -> list[Path]:
     return sorted(SRC.rglob("*.py"))
 
 
+def _reads_env(node: ast.AST) -> bool:
+    if isinstance(node, ast.Attribute):  # os.environ, os.getenv, ...
+        return (
+            node.attr in _ENV_NAMES and isinstance(node.value, ast.Name) and node.value.id == "os"
+        )
+    if isinstance(node, ast.ImportFrom):  # from os import environ; from pydantic_settings ...
+        module = node.module or ""
+        if module == "os":
+            return any(alias.name in _ENV_NAMES for alias in node.names)
+        return module.startswith("pydantic_settings")
+    if isinstance(node, ast.Import):  # import pydantic_settings
+        return any(alias.name.startswith("pydantic_settings") for alias in node.names)
+    return False
+
+
 def env_reads(source: str) -> list[int]:
     """Line numbers where the code reads the environment, directly or via pydantic-settings."""
-    lines: list[int] = []
-    for node in ast.walk(ast.parse(source)):
-        if (
-            isinstance(node, ast.Attribute)
-            and node.attr in _ENV_NAMES
-            and isinstance(node.value, ast.Name)
-            and node.value.id == "os"
-        ):
-            lines.append(node.lineno)
-        elif isinstance(node, ast.ImportFrom) and node.module == "os":
-            if any(alias.name in _ENV_NAMES for alias in node.names):
-                lines.append(node.lineno)
-        elif isinstance(node, ast.ImportFrom) and (node.module or "").startswith(
-            "pydantic_settings"
-        ):
-            lines.append(node.lineno)
-        elif isinstance(node, ast.Import) and any(
-            alias.name.startswith("pydantic_settings") for alias in node.names
-        ):
-            lines.append(node.lineno)
-    return sorted(lines)
+    return sorted(node.lineno for node in ast.walk(ast.parse(source)) if _reads_env(node))
 
 
 def test_source_tree_exists() -> None:
