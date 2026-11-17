@@ -6,6 +6,11 @@ Example in a test:
     app.dependency_overrides[get_pipeline] = lambda: FakePipeline()
 """
 
+from typing import Annotated
+
+from fastapi import Header, HTTPException, status
+
+from mcp_greenroom.config import DEV_IDENTITIES
 from mcp_greenroom.interfaces import Pipeline, Store
 from mcp_greenroom.models import Identity
 
@@ -20,9 +25,21 @@ def get_store() -> Store:
     raise NotImplementedError("registry wires the store here")
 
 
-def get_identity() -> Identity:
+def get_identity(authorization: Annotated[str | None, Header()] = None) -> Identity:
     """The caller, from the credential (bearer token), never from the request body.
 
     Unknown or missing token: 401. Dev stub tokens are in mcp_greenroom.config.DEV_IDENTITIES.
     """
-    raise NotImplementedError("registry resolves the identity here")
+    scheme, _, token = (authorization or "").partition(" ")
+    identity = DEV_IDENTITIES.get(token.strip()) if scheme.lower() == "bearer" else None
+    if identity is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail={
+                "rule_id": "auth.unknown_credential",
+                "message": "Authentication failed: missing or unknown bearer token. "
+                "Send 'Authorization: Bearer <token>' with a known token.",
+            },
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return identity
