@@ -8,7 +8,7 @@ Example in a test:
 
 from typing import Annotated
 
-from fastapi import Header, HTTPException, status
+from fastapi import Header, HTTPException, Request, status
 
 from mcp_greenroom.config import DEV_IDENTITIES
 from mcp_greenroom.interfaces import Pipeline, Store
@@ -20,9 +20,10 @@ def get_pipeline() -> Pipeline:
     raise NotImplementedError("registry wires the real pipeline here")
 
 
-def get_store() -> Store:
-    """The store. Registry defines its methods."""
-    raise NotImplementedError("registry wires the store here")
+def get_store(request: Request) -> Store:
+    """The store. Registry defines its methods (mcp_greenroom.store.SqlStore)."""
+    store: Store = request.app.state.store
+    return store
 
 
 def get_identity(authorization: Annotated[str | None, Header()] = None) -> Identity:
