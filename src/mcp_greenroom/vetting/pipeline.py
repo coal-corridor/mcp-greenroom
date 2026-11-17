@@ -12,6 +12,7 @@ from mcp_greenroom.interfaces import ClassifierProvider, NoRecording, Scanner
 from mcp_greenroom.models import (
     Decision,
     Finding,
+    FindingSource,
     Outcome,
     Reason,
     RiskResult,
@@ -19,6 +20,7 @@ from mcp_greenroom.models import (
     Tier,
     Tool,
 )
+from mcp_greenroom.risk.tiers import tier_for
 from mcp_greenroom.vetting.rules import hidden_characters
 from mcp_greenroom.vetting.validation import validate
 
@@ -38,6 +40,9 @@ class Policy:
             policy_version=settings.policy_version,
             require_human_for_all=settings.require_human_for_all,
         )
+
+
+MAX_EVIDENCE = 2000
 
 
 def _now() -> datetime:
@@ -83,9 +88,40 @@ class VettingPipeline:
         if misses:
             return self._decision(Outcome.HUMAN_REVIEW, None, misses, [], risks)
 
+        tier = tier_for(cap for r in risks for cap in r.capabilities)
+        by_name = {tool.name: tool for tool in tools}
+
+        # Step 4. Highest risk score at or above the reject threshold: rejected.
+        over = [r for r in risks if r.score >= self.policy.reject_threshold]
+        if over:
+            reasons = [
+                Reason(
+                    code="classifier.reject_threshold",
+                    message=(
+                        f"Risk score {r.score:.2f} is at or above the reject threshold "
+                        f"{self.policy.reject_threshold:.2f}."
+                    ),
+                    tool_name=r.tool_name,
+                )
+                for r in over
+            ]
+            evidence = [
+                Finding(
+                    rule_id="classifier.reject_threshold",
+                    source=FindingSource.CLASSIFIER,
+                    severity="high",
+                    tool_name=r.tool_name,
+                    evidence=by_name[r.tool_name].description[:MAX_EVIDENCE]
+                    if r.tool_name in by_name
+                    else "",
+                )
+                for r in over
+            ]
+            return self._decision(Outcome.REJECTED, tier, reasons, evidence, risks)
+
         return self._decision(
             Outcome.HUMAN_REVIEW,
-            None,
+            tier,
             [Reason(code="vetting.not_built", message="Not built yet.")],
             [],
             risks,
