@@ -136,7 +136,19 @@ def report(results: list[CaseResult], sample_rows: list[list[str]], policy: str)
 
 
 def eval_settings() -> Settings:
-    return load_settings()
+    """Settings for the gate: always replay, always the default policy. The shell may hold
+    the recording run's live settings; the check command must never call the network."""
+    settings = load_settings()
+    fields = Settings.model_fields
+    return settings.model_copy(
+        update={
+            "risk_provider": "replay",
+            "model_api_key": None,
+            "reject_threshold": fields["reject_threshold"].default,
+            "approve_threshold": fields["approve_threshold"].default,
+            "require_human_for_all": fields["require_human_for_all"].default,
+        }
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
