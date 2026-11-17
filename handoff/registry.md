@@ -1,6 +1,6 @@
 # Handoff: registry on area/registry
 
-State at commit d035b6c (2026-11-17). Uncommitted files: none.
+State at commit c232a88 (2026-11-17). Uncommitted files: none.
 
 ## Goal
 HTTP API, store, published list and audit trail as `docs/specs/registry.md` says, against the fake pipeline until vetting merges.
@@ -24,13 +24,13 @@ HTTP API, store, published list and audit trail as `docs/specs/registry.md` says
 ## Checks
   lint   pass   0.1s
   types  pass   0.2s
-  test   pass   5.4s   (99 passed)
+  test   pass   7.7s   (99 passed)
   eval   skip   0.0s
 
 ## Open
 1. Integration: wire `get_pipeline` (real submit returns 500 until then); lead fills `interfaces.Store` (review 8) and confirms one policy-version source (review 10).
 2. Deferred, see the review: 6 and 11 to the roadmap; 7 for operate.md; 9 import-time app build; 13 accepted.
-3. Open the area PR when the user says so.
+3. Area PR opened with /open-area-pr; the user merges with a merge commit.
 
 ## Decisions and corrections
 - `get_identity` taking the header is not a contract change. Work the brief without check-ins; commit each green route.
@@ -42,4 +42,4 @@ HTTP API, store, published list and audit trail as `docs/specs/registry.md` says
 none
 
 ## Next step
-User runs /open-area-pr.
+Watch the PR checks; on red, fix with a new commit. Do not merge.
