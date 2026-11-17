@@ -3,6 +3,7 @@
 First match wins. Read vet() against the numbered list in the spec.
 """
 
+import logging
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -14,6 +15,7 @@ from mcp_greenroom.interfaces import (
     NoRecording,
     Scanner,
 )
+from mcp_greenroom.logging import log_event
 from mcp_greenroom.models import (
     Decision,
     Finding,
@@ -72,7 +74,23 @@ class VettingPipeline:
     def vet(self, submission: Submission) -> Decision:
         # Step 1. Malformed, not pinned, source not allowed, no tools: Refusal (422).
         validate(submission)
-        return self._decide(submission.tools)
+        try:
+            decision = self._decide(submission.tools)
+        except Exception as exc:  # fail closed: any other failure is a human-review decision
+            log_event("vetting.internal_error", logging.ERROR, error=type(exc).__name__)
+            reason = Reason(
+                code="vetting.internal_error",
+                message="Vetting failed unexpectedly, so a human must decide.",
+            )
+            decision = self._decision(Outcome.HUMAN_REVIEW, None, [reason], [])
+        log_event(
+            "vetting.decision",
+            outcome=decision.outcome.value,
+            tier=decision.tier.value if decision.tier else None,
+            reasons=[r.code for r in decision.reasons],
+            policy_version=decision.policy_version,
+        )
+        return decision
 
     def _decide(self, tools: Sequence[Tool]) -> Decision:
         # Scanner findings are shown with every outcome, as evidence beside the result.
@@ -192,9 +210,12 @@ class VettingPipeline:
     def _scan(self, tools: Sequence[Tool]) -> tuple[list[Finding], bool]:
         """Scanner findings, and whether the scan failed. Evidence only."""
         try:
-            return list(self.scanner.scan(tools)), False
+            findings = list(self.scanner.scan(tools))
         except Exception:  # ScannerError, or anything else: fail closed
             return [], True
+        if not all(isinstance(f, Finding) for f in findings):
+            return [], True
+        return findings, False
 
     def _classify(self, tools: Sequence[Tool]) -> tuple[list[RiskResult], list[Reason]]:
         """Score every tool. A failure is a reason, never a guessed result."""
