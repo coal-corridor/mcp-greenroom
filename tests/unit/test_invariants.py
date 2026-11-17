@@ -96,3 +96,31 @@ def test_a_scanner_match_never_approves_and_never_rejects_alone(severity: str) -
 def test_a_scanner_failure_never_approves() -> None:
     pipe = VettingPipeline(FakeProvider(low_results(PAYMENTS)), BrokenScanner(), POLICY)
     assert pipe.vet(PAYMENTS).outcome is Outcome.HUMAN_REVIEW
+
+
+class JunkScanner:
+    def scan(self, tools: object) -> list[object]:
+        return ["not a finding"]
+
+
+def test_scanner_output_that_is_not_a_finding_never_approves() -> None:
+    pipe = VettingPipeline(FakeProvider(low_results(PAYMENTS)), JunkScanner(), POLICY)  # type: ignore[arg-type]
+    decision = pipe.vet(PAYMENTS)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert "not a finding" not in [str(f) for f in decision.findings]
+
+
+def test_an_unexpected_error_inside_vetting_becomes_human_review(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import mcp_greenroom.vetting.pipeline as module
+
+    def explode(*_: object) -> object:
+        raise KeyError("unexpected")
+
+    monkeypatch.setattr(module, "tier_for", explode)
+    pipe = VettingPipeline(FakeProvider(low_results(PAYMENTS)), FakeScanner(), POLICY)
+    decision = pipe.vet(PAYMENTS)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert [r.code for r in decision.reasons] == ["vetting.internal_error"]
+    assert decision.policy_version == POLICY.policy_version
