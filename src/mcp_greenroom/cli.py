@@ -311,13 +311,14 @@ def health(api: ApiOption = None, token: TokenOption = None) -> None:
 def client_check(
     config: Annotated[Path, typer.Argument(help="Client config file (Amp settings shape).")],
     api: ApiOption = None,
+    token: TokenOption = None,
 ) -> None:
     """Simulate a client's registry check: allowed or blocked, per local server.
 
     Example: mcp-greenroom client-check sample-data/client-configs/amp-settings.json
     """
     try:
-        with _client(api, None) as registry:
+        with _client(api, token) as registry:
             verdicts = check_config(config, registry)
     except (OSError, ValueError, KeyError) as exc:
         fail(
