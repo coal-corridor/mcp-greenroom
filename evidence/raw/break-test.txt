@@ -1,0 +1,371 @@
+# Break test (brief 90, step 6), 2026-11-17
+
+Fresh clone of branch integration into a temporary folder: git clone --branch integration <repo> <tmp>/clone
+README.md has no setup section yet (TODO(build) until brief 95), so setup used the CLAUDE.md commands: uv sync, ./scripts/verify.sh quick, make run.
+The script below ran each command in the clone and printed the command, its real output (stdout and stderr) and its exit code.
+Service log lines are the API's own stderr, shown after each section.
+
+## Result
+
+- Stack traces: none, in either run.
+- Defect 1, unclear: a missing file and broken JSON both gave "Could not read the submission file", naming only the exception class, with a wrong next step for a missing file. Fixed test first: 47f113a (red), 295941b (green).
+- Defect 2, unclear: a list with the store down from the start and no last-good copy said "nothing can be submitted or decided". Fixed test first: 47f113a (red), 94dc6a4 (green). The stable rule id store.unavailable is kept.
+- Left as is, weak but not wrong: a JSON array as the body gives "Request failed validation at body" without saying an object was expected.
+
+## The script
+
+#!/usr/bin/env bash
+# Break test: run each command in the clone, print the command, its output and exit code.
+set -u
+clone="$1"; cd "$clone" || exit 2
+port=8771
+export MCP_GREENROOM_API="http://127.0.0.1:${port}"
+data="$(mktemp -d)"
+show() { printf '\n$ %s\n' "$*"; "$@" 2>&1; printf -- '-> exit %s\n' "$?"; }
+serve() {  # serve ENV... : start the service in the background with extra env, wait for /livez
+  env "$@" uv run --quiet uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port "$port" --log-level warning >"$data/server.log" 2>&1 &
+  pid=$!
+  for _ in $(seq 1 60); do curl -fs "http://127.0.0.1:${port}/livez" >/dev/null 2>&1 && return 0; kill -0 $pid 2>/dev/null || return 1; sleep 0.5; done
+  return 1
+}
+stop() { kill "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; }
+
+echo "### 0. Setup (the README has no setup section yet; CLAUDE.md commands used)"
+show git log --oneline -1
+show uv sync --quiet
+show ./scripts/verify.sh quick
+
+echo; echo "### 1. Missing config value"
+show env MCP_GREENROOM_RISK_PROVIDER=live timeout 60 make run
+show env MCP_GREENROOM_REJECT_THRESHOLD= timeout 60 make run
+show env MCP_GREENROOM_REJECT_THRESHOLD=0.9 timeout 60 make run
+
+echo; echo "### 2. Malformed input file (service running on a fresh store)"
+db="sqlite:///${data}/greenroom.db"
+serve MCP_GREENROOM_DATABASE_URL="$db" MCP_GREENROOM_SNAPSHOT_PATH="${data}/last-good.json" || { echo "service did not start"; cat "$data/server.log"; }
+printf '{"server": {"name": "com.examplebank/x", ' > "$data/truncated.json"
+printf '[1, 2, 3]\n' > "$data/array.json"
+printf '{"server": {"name": "com.examplebank/x", "version": "1.0.0"}}\n' > "$data/no-tools.json"
+show uv run --quiet mcp-greenroom submit "$data/truncated.json" --token dev-dana
+show uv run --quiet mcp-greenroom submit "$data/array.json" --token dev-dana
+show uv run --quiet mcp-greenroom submit "$data/no-tools.json" --token dev-dana
+show uv run --quiet mcp-greenroom submit "$data/does-not-exist.json" --token dev-dana
+show uv run --quiet mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+stop
+echo "--- service log (stderr) for section 2:"; cat "$data/server.log"
+
+echo; echo "### 3. Store stopped"
+echo "# 3a. Store unreachable from the start (database in a folder that does not exist)"
+serve MCP_GREENROOM_DATABASE_URL="sqlite:///${data}/missing-dir/greenroom.db" MCP_GREENROOM_SNAPSHOT_PATH="${data}/none.json" || { echo "service did not start"; cat "$data/server.log"; }
+show uv run --quiet mcp-greenroom health
+show uv run --quiet mcp-greenroom list
+show uv run --quiet mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+stop
+echo "--- service log (stderr) for 3a:"; cat "$data/server.log"
+echo "# 3b. Store breaks while running (database file replaced after an approval)"
+serve MCP_GREENROOM_DATABASE_URL="$db" MCP_GREENROOM_SNAPSHOT_PATH="${data}/last-good.json" || { echo "service did not start"; cat "$data/server.log"; }
+printf 'this is not a database' > "${data}/greenroom.db"
+show uv run --quiet mcp-greenroom list
+show uv run --quiet mcp-greenroom status 00000000-0000-0000-0000-000000000000 --token dev-dana
+show uv run --quiet mcp-greenroom submit sample-data/servers/ambiguous-exporter.json --token dev-dana
+stop
+echo "--- service log (stderr) for 3b:"; cat "$data/server.log"
+rm -rf "$data"
+
+## Run 1, at a32cf5f (before the fixes)
+
+### 0. Setup (the README has no setup section yet; CLAUDE.md commands used)
+
+$ git log --oneline -1
+a32cf5f docs(integration): roadmap the hash-stamped policy version
+-> exit 0
+
+$ uv sync --quiet
+-> exit 0
+
+$ ./scripts/verify.sh quick
+
+==> lint
+All checks passed!
+152 files already formatted
+
+==> types
+Success: no issues found in 41 source files
+
+verify summary
+  stage  result time
+  lint   pass   0.1s
+  types  pass   6.8s
+
+verify: all requested stages passed or were skipped.
+-> exit 0
+
+### 1. Missing config value
+
+$ env MCP_GREENROOM_RISK_PROVIDER=live timeout 60 make run
+uv run uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port 8000
+Invalid configuration: MCP_GREENROOM_RISK_PROVIDER=live needs MCP_GREENROOM_MODEL and MCP_GREENROOM_MODEL_API_KEY set. Fix the variable in the environment or in .env (see .env.example), then start again.
+make: *** [Makefile:8: run] Error 1
+-> exit 2
+
+$ env MCP_GREENROOM_REJECT_THRESHOLD= timeout 60 make run
+uv run uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port 8000
+Invalid configuration: MCP_GREENROOM_REJECT_THRESHOLD: Input should be a valid number, unable to parse string as a number. Received ''. Fix the variable in the environment or in .env (see .env.example), then start again.
+make: *** [Makefile:8: run] Error 1
+-> exit 2
+
+$ env MCP_GREENROOM_REJECT_THRESHOLD=0.9 timeout 60 make run
+uv run uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port 8000
+Invalid configuration: MCP_GREENROOM_REJECT_THRESHOLD changed the policy, but MCP_GREENROOM_POLICY_VERSION is still 2026-11-17.1. Set a new MCP_GREENROOM_POLICY_VERSION, so each decision names the policy that made it. Fix the variable in the environment or in .env (see .env.example), then start again.
+make: *** [Makefile:8: run] Error 1
+-> exit 2
+
+### 2. Malformed input file (service running on a fresh store)
+
+$ uv run --quiet mcp-greenroom submit /tmp/tmp.gj7cgxHoK0/truncated.json --token dev-dana
+Error: Could not read the submission file.
+  Received: /tmp/tmp.gj7cgxHoK0/truncated.json (JSONDecodeError)
+  Next: Pass a JSON file with 'server' and 'tools'.
+-> exit 1
+
+$ uv run --quiet mcp-greenroom submit /tmp/tmp.gj7cgxHoK0/array.json --token dev-dana
+Error: HTTP 422 [request.invalid]: Request failed validation at body. Fix those fields and send it again.
+  Received: refused by the API (422)
+  Next: Fix the request as the message says, then send it again.
+-> exit 20
+
+$ uv run --quiet mcp-greenroom submit /tmp/tmp.gj7cgxHoK0/no-tools.json --token dev-dana
+Error: HTTP 422 [validation.malformed]: Submission is malformed at tools. Send a body with 'server' (a server.json object) and 'tools' (a list of tools).
+  Received: refused by the API (422)
+  Next: Fix the request as the message says, then send it again.
+-> exit 20
+
+$ uv run --quiet mcp-greenroom submit /tmp/tmp.gj7cgxHoK0/does-not-exist.json --token dev-dana
+Error: Could not read the submission file.
+  Received: /tmp/tmp.gj7cgxHoK0/does-not-exist.json (FileNotFoundError)
+  Next: Pass a JSON file with 'server' and 'tools'.
+-> exit 1
+
+$ uv run --quiet mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+✓ approved  com.examplebank/payments-readonly 1.2.0  tier low
+  policy.tier_low: Tier low, every risk score below 0.20, no rule or scanner match.
+Next: mcp-greenroom status 90572abd-1c35-46e8-b00f-c896307df78f
+-> exit 0
+--- service log (stderr) for section 2:
+{"duration_ms": 7.997, "event": "http.request", "level": "INFO", "method": "GET", "path": "/livez", "status": 200, "ts": "2026-11-17T04:56:36.306274+00:00"}
+{"duration_ms": 2.246, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 422, "ts": "2026-11-17T04:56:36.854557+00:00"}
+{"event": "refusal", "level": "INFO", "rule_id": "validation.malformed", "submission_id": "c7fef9f3-7f23-4002-a293-5272086cbae6", "ts": "2026-11-17T04:56:37.109605+00:00"}
+{"duration_ms": 5.373, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 422, "ts": "2026-11-17T04:56:37.110003+00:00"}
+{"event": "vetting.decision", "level": "INFO", "outcome": "approved", "policy_version": "2026-11-17.1", "reasons": ["policy.tier_low"], "tier": "low", "ts": "2026-11-17T04:56:37.590751+00:00"}
+{"decided_by": "policy", "event": "decision", "level": "INFO", "outcome": "approved", "policy_version": "2026-11-17.1", "reason_codes": ["policy.tier_low"], "submission_id": "90572abd-1c35-46e8-b00f-c896307df78f", "tier": "low", "ts": "2026-11-17T04:56:37.596873+00:00"}
+{"duration_ms": 11.134, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 201, "ts": "2026-11-17T04:56:37.597558+00:00"}
+
+### 3. Store stopped
+# 3a. Store unreachable from the start (database in a folder that does not exist)
+
+$ uv run --quiet mcp-greenroom health
+✓ live
+✗ not ready: store unavailable: database error: OperationalError
+✗ registry list failed: HTTP 503
+Next: check the API log; 'make run' restarts the service
+-> exit 1
+
+$ uv run --quiet mcp-greenroom list
+Error: HTTP 503 [store.unavailable]: The registry store is unavailable, so nothing can be submitted or decided. Try again later; GET /readyz says when the store is back.
+  Received: HTTP 503 from the API
+  Next: Check the API log, then try again.
+-> exit 1
+
+$ uv run --quiet mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+Error: HTTP 503 [store.unavailable]: The registry store is unavailable, so nothing can be submitted or decided. Try again later; GET /readyz says when the store is back.
+  Received: HTTP 503 from the API
+  Next: Check the API log, then try again.
+-> exit 1
+--- service log (stderr) for 3a:
+{"error": "database error: OperationalError", "event": "store.unavailable_at_startup", "level": "ERROR", "ts": "2026-11-17T04:56:40.281450+00:00"}
+{"duration_ms": 5.9, "event": "http.request", "level": "INFO", "method": "GET", "path": "/livez", "status": 200, "ts": "2026-11-17T04:56:40.353252+00:00"}
+{"duration_ms": 1.265, "event": "http.request", "level": "INFO", "method": "GET", "path": "/livez", "status": 200, "ts": "2026-11-17T04:56:40.663073+00:00"}
+{"duration_ms": 1.001, "event": "http.request", "level": "INFO", "method": "GET", "path": "/readyz", "status": 503, "ts": "2026-11-17T04:56:40.682080+00:00"}
+{"error": "database error: OperationalError", "event": "store.unavailable", "level": "ERROR", "ts": "2026-11-17T04:56:40.700303+00:00"}
+{"duration_ms": 2.235, "event": "http.request", "level": "INFO", "method": "GET", "path": "/v0.1/servers", "status": 503, "ts": "2026-11-17T04:56:40.700669+00:00"}
+{"error": "database error: OperationalError", "event": "store.unavailable", "level": "ERROR", "ts": "2026-11-17T04:56:41.014130+00:00"}
+{"duration_ms": 1.922, "event": "http.request", "level": "INFO", "method": "GET", "path": "/v0.1/servers", "status": 503, "ts": "2026-11-17T04:56:41.014537+00:00"}
+{"error": "database error: OperationalError", "event": "store.unavailable", "level": "ERROR", "ts": "2026-11-17T04:56:41.361877+00:00"}
+{"duration_ms": 2.939, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 503, "ts": "2026-11-17T04:56:41.362198+00:00"}
+# 3b. Store breaks while running (database file replaced after an approval)
+
+$ uv run --quiet mcp-greenroom list
+! degraded: the registry serves its last-good copy from 2026-11-17T04:56:44.419455+00:00.
+  com.examplebank/payments-readonly 1.2.0
+1 approved version(s).
+Next: mcp-greenroom client-check CONFIG, to see what a client would allow
+-> exit 0
+
+$ uv run --quiet mcp-greenroom status 00000000-0000-0000-0000-000000000000 --token dev-dana
+Error: HTTP 503 [store.unavailable]: The registry store is unavailable, so nothing can be submitted or decided. Try again later; GET /readyz says when the store is back.
+  Received: HTTP 503 from the API
+  Next: Check the API log, then try again.
+-> exit 1
+
+$ uv run --quiet mcp-greenroom submit sample-data/servers/ambiguous-exporter.json --token dev-dana
+Error: HTTP 503 [store.unavailable]: The registry store is unavailable, so nothing can be submitted or decided. Try again later; GET /readyz says when the store is back.
+  Received: HTTP 503 from the API
+  Next: Check the API log, then try again.
+-> exit 1
+--- service log (stderr) for 3b:
+{"duration_ms": 4.816, "event": "http.request", "level": "INFO", "method": "GET", "path": "/livez", "status": 200, "ts": "2026-11-17T04:56:44.701176+00:00"}
+{"error": "database error: DatabaseError", "event": "list.degraded", "generated_at": "2026-11-17T04:56:44.419455+00:00", "level": "INFO", "ts": "2026-11-17T04:56:44.953092+00:00"}
+{"duration_ms": 2.27, "event": "http.request", "level": "INFO", "method": "GET", "path": "/v0.1/servers", "status": 200, "ts": "2026-11-17T04:56:44.953605+00:00"}
+{"error": "database error: DatabaseError", "event": "store.unavailable", "level": "ERROR", "ts": "2026-11-17T04:56:45.211530+00:00"}
+{"duration_ms": 2.427, "event": "http.request", "level": "INFO", "method": "GET", "path": "/submissions/00000000-0000-0000-0000-000000000000", "status": 503, "ts": "2026-11-17T04:56:45.211800+00:00"}
+{"error": "database error: DatabaseError", "event": "store.unavailable", "level": "ERROR", "ts": "2026-11-17T04:56:45.460599+00:00"}
+{"duration_ms": 2.971, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 503, "ts": "2026-11-17T04:56:45.460869+00:00"}
+
+## Run 2, at 94dc6a4 (after the fixes), from a new fresh clone
+
+### 0. Setup (the README has no setup section yet; CLAUDE.md commands used)
+
+$ git log --oneline -1
+94dc6a4 fix(integration): a list with no store and no last-good copy explains itself
+-> exit 0
+
+$ uv sync --quiet
+-> exit 0
+
+$ ./scripts/verify.sh quick
+
+==> lint
+All checks passed!
+154 files already formatted
+
+==> types
+Success: no issues found in 42 source files
+
+verify summary
+  stage  result time
+  lint   pass   0.1s
+  types  pass   7.0s
+
+verify: all requested stages passed or were skipped.
+-> exit 0
+
+### 1. Missing config value
+
+$ env MCP_GREENROOM_RISK_PROVIDER=live timeout 60 make run
+uv run uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port 8000
+Invalid configuration: MCP_GREENROOM_RISK_PROVIDER=live needs MCP_GREENROOM_MODEL and MCP_GREENROOM_MODEL_API_KEY set. Fix the variable in the environment or in .env (see .env.example), then start again.
+make: *** [Makefile:8: run] Error 1
+-> exit 2
+
+$ env MCP_GREENROOM_REJECT_THRESHOLD= timeout 60 make run
+uv run uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port 8000
+Invalid configuration: MCP_GREENROOM_REJECT_THRESHOLD: Input should be a valid number, unable to parse string as a number. Received ''. Fix the variable in the environment or in .env (see .env.example), then start again.
+make: *** [Makefile:8: run] Error 1
+-> exit 2
+
+$ env MCP_GREENROOM_REJECT_THRESHOLD=0.9 timeout 60 make run
+uv run uvicorn mcp_greenroom.api.main:app --host 127.0.0.1 --port 8000
+Invalid configuration: MCP_GREENROOM_REJECT_THRESHOLD changed the policy, but MCP_GREENROOM_POLICY_VERSION is still 2026-11-17.1. Set a new MCP_GREENROOM_POLICY_VERSION, so each decision names the policy that made it. Fix the variable in the environment or in .env (see .env.example), then start again.
+make: *** [Makefile:8: run] Error 1
+-> exit 2
+
+### 2. Malformed input file (service running on a fresh store)
+
+$ uv run --quiet mcp-greenroom submit /tmp/tmp.EKTZXaOssy/truncated.json --token dev-dana
+Error: Submission file is not valid JSON.
+  Received: /tmp/tmp.EKTZXaOssy/truncated.json: Expecting property name enclosed in double quotes at line 1, column 42
+  Next: Fix the JSON at that line, then run submit again.
+-> exit 1
+
+$ uv run --quiet mcp-greenroom submit /tmp/tmp.EKTZXaOssy/array.json --token dev-dana
+Error: HTTP 422 [request.invalid]: Request failed validation at body. Fix those fields and send it again.
+  Received: refused by the API (422)
+  Next: Fix the request as the message says, then send it again.
+-> exit 20
+
+$ uv run --quiet mcp-greenroom submit /tmp/tmp.EKTZXaOssy/no-tools.json --token dev-dana
+Error: HTTP 422 [validation.malformed]: Submission is malformed at tools. Send a body with 'server' (a server.json object) and 'tools' (a list of tools).
+  Received: refused by the API (422)
+  Next: Fix the request as the message says, then send it again.
+-> exit 20
+
+$ uv run --quiet mcp-greenroom submit /tmp/tmp.EKTZXaOssy/does-not-exist.json --token dev-dana
+Error: Submission file not found.
+  Received: /tmp/tmp.EKTZXaOssy/does-not-exist.json
+  Next: Check the path, then run submit again.
+-> exit 1
+
+$ uv run --quiet mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+✓ approved  com.examplebank/payments-readonly 1.2.0  tier low
+  policy.tier_low: Tier low, every risk score below 0.20, no rule or scanner match.
+Next: mcp-greenroom status 02cdeecd-cc0b-429a-9451-91fe310f9185
+-> exit 0
+--- service log (stderr) for section 2:
+{"duration_ms": 4.837, "event": "http.request", "level": "INFO", "method": "GET", "path": "/livez", "status": 200, "ts": "2026-11-17T04:59:26.713850+00:00"}
+{"duration_ms": 3.076, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 422, "ts": "2026-11-17T04:59:27.299746+00:00"}
+{"event": "refusal", "level": "INFO", "rule_id": "validation.malformed", "submission_id": "363c8423-7afc-421f-b0c9-23def2cc1bd0", "ts": "2026-11-17T04:59:27.662072+00:00"}
+{"duration_ms": 7.267, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 422, "ts": "2026-11-17T04:59:27.662722+00:00"}
+{"event": "vetting.decision", "level": "INFO", "outcome": "approved", "policy_version": "2026-11-17.1", "reasons": ["policy.tier_low"], "tier": "low", "ts": "2026-11-17T04:59:28.371514+00:00"}
+{"decided_by": "policy", "event": "decision", "level": "INFO", "outcome": "approved", "policy_version": "2026-11-17.1", "reason_codes": ["policy.tier_low"], "submission_id": "02cdeecd-cc0b-429a-9451-91fe310f9185", "tier": "low", "ts": "2026-11-17T04:59:28.381045+00:00"}
+{"duration_ms": 19.763, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 201, "ts": "2026-11-17T04:59:28.382117+00:00"}
+
+### 3. Store stopped
+# 3a. Store unreachable from the start (database in a folder that does not exist)
+
+$ uv run --quiet mcp-greenroom health
+✓ live
+✗ not ready: store unavailable: database error: OperationalError
+✗ registry list failed: HTTP 503
+Next: check the API log; 'make run' restarts the service
+-> exit 1
+
+$ uv run --quiet mcp-greenroom list
+Error: HTTP 503 [store.unavailable]: List failed: the registry store is unavailable and there is no last-good copy yet to serve. Try again once GET /readyz reports ready.
+  Received: HTTP 503 from the API
+  Next: Check the API log, then try again.
+-> exit 1
+
+$ uv run --quiet mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+Error: HTTP 503 [store.unavailable]: The registry store is unavailable, so nothing can be submitted or decided. Try again later; GET /readyz says when the store is back.
+  Received: HTTP 503 from the API
+  Next: Check the API log, then try again.
+-> exit 1
+--- service log (stderr) for 3a:
+{"error": "database error: OperationalError", "event": "store.unavailable_at_startup", "level": "ERROR", "ts": "2026-11-17T04:59:32.335953+00:00"}
+{"duration_ms": 7.786, "event": "http.request", "level": "INFO", "method": "GET", "path": "/livez", "status": 200, "ts": "2026-11-17T04:59:32.788394+00:00"}
+{"duration_ms": 0.879, "event": "http.request", "level": "INFO", "method": "GET", "path": "/livez", "status": 200, "ts": "2026-11-17T04:59:33.026718+00:00"}
+{"duration_ms": 0.79, "event": "http.request", "level": "INFO", "method": "GET", "path": "/readyz", "status": 503, "ts": "2026-11-17T04:59:33.039913+00:00"}
+{"error": "database error: OperationalError", "event": "store.unavailable", "level": "ERROR", "snapshot": "missing", "ts": "2026-11-17T04:59:33.054765+00:00"}
+{"duration_ms": 2.283, "event": "http.request", "level": "INFO", "method": "GET", "path": "/v0.1/servers", "status": 503, "ts": "2026-11-17T04:59:33.055278+00:00"}
+{"error": "database error: OperationalError", "event": "store.unavailable", "level": "ERROR", "snapshot": "missing", "ts": "2026-11-17T04:59:33.308242+00:00"}
+{"duration_ms": 1.168, "event": "http.request", "level": "INFO", "method": "GET", "path": "/v0.1/servers", "status": 503, "ts": "2026-11-17T04:59:33.308626+00:00"}
+{"error": "database error: OperationalError", "event": "store.unavailable", "level": "ERROR", "ts": "2026-11-17T04:59:33.555931+00:00"}
+{"duration_ms": 2.36, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 503, "ts": "2026-11-17T04:59:33.556299+00:00"}
+# 3b. Store breaks while running (database file replaced after an approval)
+
+$ uv run --quiet mcp-greenroom list
+! degraded: the registry serves its last-good copy from 2026-11-17T04:59:36.191606+00:00.
+  com.examplebank/payments-readonly 1.2.0
+1 approved version(s).
+Next: mcp-greenroom client-check CONFIG, to see what a client would allow
+-> exit 0
+
+$ uv run --quiet mcp-greenroom status 00000000-0000-0000-0000-000000000000 --token dev-dana
+Error: HTTP 503 [store.unavailable]: The registry store is unavailable, so nothing can be submitted or decided. Try again later; GET /readyz says when the store is back.
+  Received: HTTP 503 from the API
+  Next: Check the API log, then try again.
+-> exit 1
+
+$ uv run --quiet mcp-greenroom submit sample-data/servers/ambiguous-exporter.json --token dev-dana
+Error: HTTP 503 [store.unavailable]: The registry store is unavailable, so nothing can be submitted or decided. Try again later; GET /readyz says when the store is back.
+  Received: HTTP 503 from the API
+  Next: Check the API log, then try again.
+-> exit 1
+--- service log (stderr) for 3b:
+{"duration_ms": 6.9, "event": "http.request", "level": "INFO", "method": "GET", "path": "/livez", "status": 200, "ts": "2026-11-17T04:59:36.338542+00:00"}
+{"error": "database error: DatabaseError", "event": "list.degraded", "generated_at": "2026-11-17T04:59:36.191606+00:00", "level": "INFO", "ts": "2026-11-17T04:59:36.641538+00:00"}
+{"duration_ms": 3.205, "event": "http.request", "level": "INFO", "method": "GET", "path": "/v0.1/servers", "status": 200, "ts": "2026-11-17T04:59:36.642112+00:00"}
+{"error": "database error: DatabaseError", "event": "store.unavailable", "level": "ERROR", "ts": "2026-11-17T04:59:37.060334+00:00"}
+{"duration_ms": 4.567, "event": "http.request", "level": "INFO", "method": "GET", "path": "/submissions/00000000-0000-0000-0000-000000000000", "status": 503, "ts": "2026-11-17T04:59:37.060797+00:00"}
+{"error": "database error: DatabaseError", "event": "store.unavailable", "level": "ERROR", "ts": "2026-11-17T04:59:37.464723+00:00"}
+{"duration_ms": 4.58, "event": "http.request", "level": "INFO", "method": "POST", "path": "/submissions", "status": 503, "ts": "2026-11-17T04:59:37.465079+00:00"}
