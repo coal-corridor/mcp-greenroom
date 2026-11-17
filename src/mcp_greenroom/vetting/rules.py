@@ -2,7 +2,8 @@
 
 A hidden character is one a reader does not see: format characters (zero-width, bidi
 controls, tag characters), control characters other than tab and line breaks, private
-use, unassigned code points, and the supplementary variation selectors. The finding's
+use, unassigned code points, the supplementary variation selectors, and letters that
+render as blank (Hangul fillers, Braille blank, Khmer inherent vowels). The finding's
 evidence names code points and positions, never the text itself.
 """
 
@@ -17,12 +18,19 @@ MAX_LISTED = 5
 _HIDDEN_CATEGORIES = frozenset({"Cf", "Cc", "Co", "Cn"})
 _VISIBLE_CONTROLS = frozenset("\t\n\r")
 _SUPPLEMENTARY_SELECTORS = range(0xE0100, 0xE01F0)
+# Letters and symbols that render as blank: Hangul fillers, Braille blank, Khmer inherent
+# vowels. Their categories (Lo, So, Mn) look harmless, so they are listed by code point.
+_INVISIBLE_LETTERS = frozenset("\u115f\u1160\u17b4\u17b5\u2800\u3164\uffa0")
 
 
 def is_hidden(char: str) -> bool:
     if char in _VISIBLE_CONTROLS:
         return False
-    return unicodedata.category(char) in _HIDDEN_CATEGORIES or ord(char) in _SUPPLEMENTARY_SELECTORS
+    return (
+        unicodedata.category(char) in _HIDDEN_CATEGORIES
+        or ord(char) in _SUPPLEMENTARY_SELECTORS
+        or char in _INVISIBLE_LETTERS
+    )
 
 
 def _positions(field: str, text: str) -> list[str]:
