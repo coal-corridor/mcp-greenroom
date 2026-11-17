@@ -16,7 +16,7 @@ _MEDIUM = frozenset({Capability.LOCAL_WRITE, Capability.NETWORK_EGRESS})
 def tier_for(capabilities: Iterable[Capability]) -> Tier:
     """The tier of a set of capabilities."""
     found = frozenset(capabilities)
-    if found & _HIGH_ALONE or _HIGH_TOGETHER <= found:
+    if found & _HIGH_ALONE or found.issuperset(_HIGH_TOGETHER):
         return Tier.HIGH
     if found & _MEDIUM:
         return Tier.MEDIUM
