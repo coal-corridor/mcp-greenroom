@@ -35,7 +35,10 @@ SAMPLES: dict[str, Expected] = {
         Outcome.REJECTED.value, code="classifier.reject_threshold", tool="search_notes"
     ),
     UNRECORDED: Expected(Outcome.HUMAN_REVIEW.value, code="classifier.no_recording"),
-    "ambiguous-exporter": Expected(Outcome.HUMAN_REVIEW.value, Tier.MEDIUM, "tier.medium"),
+    # Outcome and tier only: sample-data/servers/README.md says the table fixes outcomes, and
+    # reason codes are vetting's to name. The sample may reach review at step 5 (uncertain
+    # score) before step 7 (tier medium); both are human review at tier medium (user decision).
+    "ambiguous-exporter": Expected(Outcome.HUMAN_REVIEW.value, Tier.MEDIUM),
 }
 
 
@@ -47,10 +50,15 @@ def _scanner_matched(decision: Decision) -> bool:
     return any(f.source is FindingSource.SCANNER for f in decision.findings)
 
 
+CAPABILITIES: dict[str, str] = {}  # case id -> capability tags the classifier returned
+
+
 def run_cases(pipeline: VettingPipeline) -> list[CaseResult]:
     results = []
     for case in load_dataset():
         decision = pipeline.vet(case_submission(case))
+        tags = sorted({c.value for r in decision.risks for c in r.capabilities})
+        CAPABILITIES[case.case_id] = ", ".join(tags) or "-"
         results.append(
             CaseResult(
                 case.case_id,
@@ -106,7 +114,10 @@ def _table(header: list[str], rows: list[list[str]]) -> list[str]:
 def report(results: list[CaseResult], sample_rows: list[list[str]], policy: str) -> list[str]:
     columns = ["label", "total", "approved", "human_review", "rejected", "scanner_matched"]
     by_label = [[str(row[c]) for c in columns] for row in label_table(results)]
-    cases = [[r.case_id, r.label, r.outcome.value, ", ".join(r.codes)] for r in results]
+    cases = [
+        [r.case_id, r.label, r.outcome.value, ", ".join(r.codes), CAPABILITIES.get(r.case_id, "-")]
+        for r in results
+    ]
     return [
         f"# Classifier evaluation (policy {policy})",
         "",
@@ -120,7 +131,7 @@ def report(results: list[CaseResult], sample_rows: list[list[str]], policy: str)
         "",
         "## Cases",
         "",
-        *_table(["case", "label", "outcome", "reasons"], cases),
+        *_table(["case", "label", "outcome", "reasons", "capabilities"], cases),
     ]
 
 
