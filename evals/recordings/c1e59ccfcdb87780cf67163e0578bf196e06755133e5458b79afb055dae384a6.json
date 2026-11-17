@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The tool plainly returns one section of an internal credit policy by number and is read-only, with no hidden instructions, secret access, or outbound data flow described.\"}",
+  "description_sha256": "cada6cbe8cc8e51ff3edbd51d9320b20c5d662db934ebfe4e5fc713f1e3f798e",
+  "format": 1,
+  "key": "c1e59ccfcdb87780cf67163e0578bf196e06755133e5458b79afb055dae384a6",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:13:02.194955Z",
+  "stop_reason": "end_turn",
+  "tool_name": "read_credit_policy",
+  "usage": {
+    "input_tokens": 1300,
+    "output_tokens": 81
+  }
+}

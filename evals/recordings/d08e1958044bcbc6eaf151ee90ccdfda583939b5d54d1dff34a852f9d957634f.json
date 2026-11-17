@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a pure local formatting and checksum validation with no network contact, no secrets, and no instructions aimed at the model.\"}",
+  "description_sha256": "20a72696691ceafc7062efabd65678362bbb53b0f06f270559689bd18cdeef73",
+  "format": 1,
+  "key": "d08e1958044bcbc6eaf151ee90ccdfda583939b5d54d1dff34a852f9d957634f",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:12:45.851601Z",
+  "stop_reason": "end_turn",
+  "tool_name": "format_iban",
+  "usage": {
+    "input_tokens": 1306,
+    "output_tokens": 75
+  }
+}

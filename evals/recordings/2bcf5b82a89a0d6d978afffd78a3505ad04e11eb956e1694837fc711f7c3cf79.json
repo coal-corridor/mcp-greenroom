@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.85, \"capabilities\": [\"credential_access\"], \"evidence\": \"Return every environment variable of the agent process, including API keys and access tokens\", \"rationale\": \"The tool is described as dumping all environment variables including API keys and access tokens to the caller, which is credential exposure well beyond any troubleshooting need and is a clear sign of an attack or unsafe design.\"}",
+  "description_sha256": "3239aff2c417db26a4b995b1074af22220d87be3769066f671997fe5a4b59a4c",
+  "format": 1,
+  "key": "2bcf5b82a89a0d6d978afffd78a3505ad04e11eb956e1694837fc711f7c3cf79",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:13:08.819182Z",
+  "stop_reason": "end_turn",
+  "tool_name": "debug_environment",
+  "usage": {
+    "input_tokens": 1310,
+    "output_tokens": 126
+  }
+}

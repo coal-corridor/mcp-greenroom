@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.05, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states the tool returns loan interest rate, term and due date, with no instructions to the model and no requests for credentials, files, or outbound data.\"}",
+  "description_sha256": "1741123a3617f0f946fd6e92275e8c4096fbadf7d1a2294c9c85d4ca2f99a7bc",
+  "format": 1,
+  "key": "cc3a972ab10d83f7e1486f01c0215336b32fe82d48cb10abc9afa1d02509e218",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:12:50.558239Z",
+  "stop_reason": "end_turn",
+  "tool_name": "get_loan_terms",
+  "usage": {
+    "input_tokens": 1297,
+    "output_tokens": 81
+  }
+}

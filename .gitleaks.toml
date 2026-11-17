@@ -1,0 +1,19 @@
+# Gitleaks configuration: the default rules, plus one narrow allowlist.
+#
+# Each classifier recording (evals/recordings/<key>.json) carries its replay key, a SHA-256
+# hex digest of the prompt version, tool name and description, in a field named "key". The
+# default generic-api-key rule flags it. The allowlist excuses only that rule, only in
+# recording files, and only when the matched value is exactly 64 lowercase hex characters:
+# path and value must both match (condition AND). Any other secret in a recording is still
+# reported. Approved by the user, 2026-11-17.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Replay keys (SHA-256 hex) in classifier recordings"
+targetRules = ["generic-api-key"]
+condition = "AND"
+paths = ['''^evals/recordings/[^/]+\.json$''']
+regexTarget = "secret"
+regexes = ['''^[0-9a-f]{64}$''']

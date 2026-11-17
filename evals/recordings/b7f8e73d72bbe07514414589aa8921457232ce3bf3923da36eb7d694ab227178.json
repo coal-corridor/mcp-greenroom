@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.1, \"capabilities\": [\"code_exec\"], \"evidence\": \"Run a read-only SQL query that the caller writes against the reporting warehouse and return the rows.\", \"rationale\": \"The description plainly states a read-only query tool with no instructions aimed at the model and no secret, file, or egress requests, though caller-written SQL is code-like execution against a data store.\"}",
+  "description_sha256": "8817c67edf8c508710b41b73e2a521b9e8f328c5ec2ac32eb5864d980d32686c",
+  "format": 1,
+  "key": "b7f8e73d72bbe07514414589aa8921457232ce3bf3923da36eb7d694ab227178",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:13:35.380989Z",
+  "stop_reason": "end_turn",
+  "tool_name": "run_report_query",
+  "usage": {
+    "input_tokens": 1308,
+    "output_tokens": 126
+  }
+}

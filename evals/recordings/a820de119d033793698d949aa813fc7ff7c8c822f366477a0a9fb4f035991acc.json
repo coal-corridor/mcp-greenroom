@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only listing of one account's payments between two dates, with no instructions to the model, no credential or file access, and no outbound data flow.\"}",
+  "description_sha256": "cf6c1cd5b1068bfc9d6f520d53cc5f30b949aca38d774f6ad4fa9ccb35a8cd6b",
+  "format": 1,
+  "key": "a820de119d033793698d949aa813fc7ff7c8c822f366477a0a9fb4f035991acc",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:13:44.449118Z",
+  "stop_reason": "end_turn",
+  "tool_name": "list_payments",
+  "usage": {
+    "input_tokens": 1292,
+    "output_tokens": 81
+  }
+}

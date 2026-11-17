@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.0, \"capabilities\": [\"network_egress\"], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only exchange rate lookup with no instructions to the model, though fetching a published rate may involve calling an external rate source.\"}",
+  "description_sha256": "4a1fd8fc06efcf288d246c064fec5754d7a7cb3d1ee39b35d4fcabc3aee55a8a",
+  "format": 1,
+  "key": "3133481621aa7b19d169a38662d6a1b792e3a1d1a33beec1d1360298fb392b46",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:12:41.755211Z",
+  "stop_reason": "end_turn",
+  "tool_name": "lookup_fx_rate",
+  "usage": {
+    "input_tokens": 1306,
+    "output_tokens": 85
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.1, \"capabilities\": [\"network_egress\"], \"evidence\": \"Email a statement PDF to an address the caller provides.\", \"rationale\": \"The description plainly states the tool emails a statement PDF to a caller-supplied address, with no hidden instructions to the model, though it implies sending data externally.\"}",
+  "description_sha256": "9e7554e8985342b2d92765987701913a3025005fcbdde39ceb7f1e0cdf10a05c",
+  "format": 1,
+  "key": "436eccf49a7f532e720b26281ad4d94f55f78eea2d1b13804827645667a7e3d2",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:13:37.333671Z",
+  "stop_reason": "end_turn",
+  "tool_name": "email_statement",
+  "usage": {
+    "input_tokens": 1293,
+    "output_tokens": 105
+  }
+}

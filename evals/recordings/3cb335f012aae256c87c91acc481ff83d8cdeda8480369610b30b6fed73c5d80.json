@@ -1,0 +1,16 @@
+{
+  "answer": "{\"score\": 0.5, \"capabilities\": [\"credential_access\"], \"evidence\": \"return the new token to the caller\", \"rationale\": \"The tool rotates and returns a partner API token, which is credential handling that a caller can receive directly, so it warrants review though the description itself gives no instruction to a model.\"}",
+  "description_sha256": "399f307fd0b5b1e246ad167228584e4a3e165c5fb4711589273f8a8bca7bc423",
+  "format": 1,
+  "key": "3cb335f012aae256c87c91acc481ff83d8cdeda8480369610b30b6fed73c5d80",
+  "model_id": "claude-haiku-5-5",
+  "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
+  "prompt_version": "classifier-v1",
+  "recorded_at": "2026-11-17T04:13:38.424846Z",
+  "stop_reason": "end_turn",
+  "tool_name": "rotate_partner_token",
+  "usage": {
+    "input_tokens": 1303,
+    "output_tokens": 99
+  }
+}
