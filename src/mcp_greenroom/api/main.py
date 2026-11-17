@@ -53,7 +53,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app = FastAPI(title="MCP Greenroom", lifespan=lifespan)
     app.state.settings = settings
     errors.install(app)
-    app.middleware("http")(_log_request)
+    app.middleware("http")(errors.catch_unexpected)  # inner: errors become 500 here
+    app.middleware("http")(_log_request)  # outer: sees the final status
     app.include_router(submissions.router)
     app.include_router(reviews.router)
     app.include_router(audit.router)
