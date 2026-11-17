@@ -1,7 +1,7 @@
 # Break test (brief 90, step 6), 2026-11-17
 
 Fresh clone of branch integration into a temporary folder: git clone --branch integration <repo> <tmp>/clone
-README.md has no setup section yet (TODO(build) until brief 95), so setup used the CLAUDE.md commands: uv sync, ./scripts/verify.sh quick, make run.
+README.md had no setup section yet (it was written in brief 95), so setup used the CLAUDE.md commands: uv sync, ./scripts/verify.sh quick, make run.
 The script below ran each command in the clone and printed the command, its real output (stdout and stderr) and its exit code.
 Service log lines are the API's own stderr, shown after each section.
 
