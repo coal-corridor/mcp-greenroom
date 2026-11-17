@@ -1,37 +1,38 @@
 # Handoff: lead on setup
 
-State at commit 0b4ecd9 (2026-11-17). Uncommitted files: none.
+State at commit f343f5d (2026-11-17). Uncommitted files: none. PR #1 (setup -> main) open.
 
 ## Goal
-Brief 00: before any feature exists, the repo has one check script, PR checks that call it, and guard rails. Lands in the setup PR with brief 10.
+Brief 00: check script, PR checks, guard rails (closed). Brief 10: shared shapes and seams written, tested, frozen; same PR.
 
 ## Plan
-Approved 2026-11-17. One commit each:
-0. Branch `setup` from `main` (done). No baseline commit: `main` already has 3 pushed commits.
-1. `pyproject.toml` (the parent spec's stack, dev group, ruff `S` set), `.python-version` 3.12, empty `src/mcp_greenroom/`, `uv.lock`.
-2. `scripts/verify.sh`: lint/types/test/eval/quick/all, runs every stage, summary table with result and time, eval skipped until a dataset exists. Commit while `test` fails.
-3. `tests/conftest.py`: guard that blocks outbound connections except to localhost.
-4. `tests/structure/`: 350-line limit; only the config module reads env vars.
-5. `.github/workflows/ci.yml`: `verify (quick|test|eval)`, `secret scan` (gitleaks, full history), non-blocking `uv audit`. Read-only permissions, actions pinned to SHAs, uv pinned.
-6. `Makefile`: verify, run, demo, record.
+Brief 00 as approved: pyproject/lock, verify.sh, network guard, structure tests, ci.yml, Makefile.
+Brief 10, one commit each: contracts/, shared modules, seams, sample-data/servers, fakes under tests/, one shape test per shared module, CLAUDE.md paths.
 
 ## Done
-Nothing built yet. Branch `setup` created from `main` at 0b4ecd9.
+- 86697af pyproject, uv.lock, .python-version, empty package.
+- 0be6efe scripts/verify.sh. 0e67edf network guard (tests/structure/test_network_guard.py). 9b3d50f + ffa1567 structure rules (tests/structure/test_source_rules.py).
+- b07f740 ci.yml, 40070b0 Makefile. CI run 44008340480 on PR #1: all five jobs green and named.
+- f343f5d contracts/: OpenAPI 2025-12-01 and server.schema.json 2025-12-11 pinned with sha256. Match the spec.
 
 ## Checks
-`./scripts/verify.sh` does not exist yet (plan item 2).
+  lint   pass   types  pass   test   pass (17)   eval   skip   (exit 0, before f343f5d; quick green after it)
 
 ## Open
-Plan items 1 to 6 in order, then brief 10 (contracts) in the same PR.
+1. Propose model names and fields plus seams. The user decides.
+2. Brief 10 items 2 to 7. 3. "contracts frozen", green checks, user merges PR #1.
 
 ## Decisions and corrections
-- The repo is private for now, so required checks can't be switched on yet. The user merges on green by hand. Not a blocker.
-- No baseline commit: `main` already had 3 pushed commits (verified with `git log`).
-- If `cisco-ai-mcp-scanner` does not resolve or install cleanly, leave it out of `pyproject.toml` and tell the user. Don't debug it in this phase.
-- "Full script fails only on test" applies at commit 2. After items 3 and 4, `test` should pass.
+- The repo is private, so required checks are off. The user merges on green by hand.
+- No baseline commit (main had 3 commits).
+- cisco-ai-mcp-scanner kept. litellm GHSA-g5ff-637f-6q2m and GHSA-7hp6-4w63-5g45 waived in [tool.uv.audit], recorded in evidence/decisions.md (user's choice).
+- Secret scan: pinned gitleaks 8.30.1 binary over full history, not the official action (that scans only the event's commits). Departs from delivery.md.
+- The user said: stop researching gitleaks, decide with what is known.
+- ruff 0.17 also formats Python code blocks in .md files, so lint covers docs.
+- Check verify.sh's own exit code before a commit (9b3d50f slipped through `| tail`).
 
 ## Question at the impasse
-none
+Model names and fields and the injection approach: waiting for the user.
 
 ## Next step
-Plan item 1: write `pyproject.toml` and run `uv lock`.
+Write src/mcp_greenroom/models.py once the user approves the proposal.
