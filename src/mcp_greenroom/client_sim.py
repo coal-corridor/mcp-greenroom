@@ -41,13 +41,40 @@ def _package(entry: dict[str, Any]) -> tuple[str, str] | None:
     return registry_type, _strip_version(args[0])
 
 
+class RegistryUnusableError(Exception):
+    """The registry list could not be read: unreachable, a server error, or not a ServerList."""
+
+
+def _packages(record: object) -> set[tuple[str, str]]:
+    server = record.get("server") if isinstance(record, dict) else None
+    packages = server.get("packages", []) if isinstance(server, dict) else None
+    if not isinstance(packages, list):
+        raise RegistryUnusableError("a record has no server object or no packages list")
+    found = set()
+    for package in packages:
+        kind = package.get("registryType") if isinstance(package, dict) else None
+        ident = package.get("identifier") if isinstance(package, dict) else None
+        if not (isinstance(kind, str) and isinstance(ident, str)):
+            raise RegistryUnusableError("a package has no registryType or identifier string")
+        found.add((kind, ident))
+    return found
+
+
 def _listed(registry: httpx.Client) -> set[tuple[str, str]]:
-    body = registry.get(LIST_PATH).json()
-    return {
-        (package["registryType"], package["identifier"])
-        for record in body["servers"]
-        for package in record["server"].get("packages", [])
-    }
+    try:
+        response = registry.get(LIST_PATH)
+        response.raise_for_status()
+        body = response.json()
+    except httpx.HTTPStatusError as exc:
+        raise RegistryUnusableError(f"HTTP {exc.response.status_code}") from None
+    except httpx.HTTPError as exc:
+        raise RegistryUnusableError(f"unreachable ({type(exc).__name__})") from None
+    except ValueError:
+        raise RegistryUnusableError("the reply is not JSON") from None
+    records = body.get("servers") if isinstance(body, dict) else None
+    if not isinstance(records, list):
+        raise RegistryUnusableError("the reply has no servers list")
+    return {package for record in records for package in _packages(record)}
 
 
 def check_config(config_path: Path, registry: httpx.Client) -> list[Verdict]:
@@ -56,8 +83,8 @@ def check_config(config_path: Path, registry: httpx.Client) -> list[Verdict]:
     ]
     try:
         listed = _listed(registry)
-    except httpx.HTTPError as exc:
-        reason = f"registry unreachable ({type(exc).__name__}), so every server is blocked"
+    except RegistryUnusableError as exc:
+        reason = f"registry list unusable: {exc}, so every server is blocked"
         return [Verdict(name, False, reason) for name in servers]
     verdicts = []
     for name, entry in servers.items():
