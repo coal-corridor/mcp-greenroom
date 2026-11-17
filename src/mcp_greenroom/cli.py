@@ -1,6 +1,7 @@
 """The mcp-greenroom command. Talks to the API over HTTP only."""
 
 import json
+import sys
 from pathlib import Path
 from typing import Annotated, Any, NoReturn
 
@@ -49,6 +50,10 @@ ApiOption = Annotated[
 ]
 TokenOption = Annotated[
     str | None, typer.Option("--token", help="Bearer token. Default: MCP_GREENROOM_TOKEN.")
+]
+
+JsonOption = Annotated[
+    bool, typer.Option("--json", help="Print the API response body as JSON, nothing else.")
 ]
 
 
@@ -104,6 +109,10 @@ def main(ctx: typer.Context) -> None:
     out.print(f"[dim]Next: {NAME} --help, or {NAME} COMMAND --help[/dim]")
 
 
+def _exit_code(body: dict[str, Any]) -> int:
+    return OUTCOMES.get(str(body.get("outcome")), ("", "", EXIT_FAILURE))[2]
+
+
 def _show_decision(body: dict[str, Any]) -> int:
     """Print a submission's decision. Returns the exit code for its outcome."""
     word, colour, code = OUTCOMES.get(str(body.get("outcome")), ("? unknown", "", EXIT_FAILURE))
@@ -125,8 +134,13 @@ def _show_decision(body: dict[str, Any]) -> int:
     return code
 
 
-def _call(method: str, path: str, api: str | None, token: str | None, **kwargs: Any) -> Any:
-    """Send one request. Returns the JSON body of a 2xx answer, or exits with a clear error."""
+def _call(
+    method: str, path: str, api: str | None, token: str | None, as_json: bool, **kwargs: Any
+) -> Any:
+    """Send one request. Returns the JSON body of a 2xx answer, or exits with a clear error.
+
+    With as_json, the body is also printed unchanged, alone on standard output.
+    """
     with _client(api, token) as client:
         try:
             response = client.request(method, path, **kwargs)
@@ -136,9 +150,14 @@ def _call(method: str, path: str, api: str | None, token: str | None, **kwargs: 
                 f"{method} {client.base_url.join(path)}",
                 "Start it with 'make run', or pass the right address with --api.",
             )
-    if response.is_success:
+    if as_json and response.content:
+        sys.stdout.write(response.text.rstrip("\n") + "\n")
+    if not response.is_success:
+        _fail_from(response)
+    try:
         return response.json()
-    _fail_from(response)
+    except ValueError:
+        _fail("The API answer is not JSON.", f"HTTP {response.status_code}", "Check --api.")
 
 
 def _fail_from(response: httpx.Response) -> NoReturn:
@@ -167,6 +186,7 @@ def submit(
     file: Annotated[Path, typer.Argument(help="Submission file: server.json and tools.")],
     api: ApiOption = None,
     token: TokenOption = None,
+    as_json: JsonOption = False,
 ) -> None:
     """Send one server version for vetting.
 
@@ -180,8 +200,8 @@ def submit(
             f"{file} ({type(exc).__name__})",
             "Pass a JSON file with 'server' and 'tools'.",
         )
-    body = _call("POST", "/submissions", api, token, json=payload)
-    raise typer.Exit(_show_decision(body))
+    body = _call("POST", "/submissions", api, token, as_json, json=payload)
+    raise typer.Exit(_exit_code(body) if as_json else _show_decision(body))
 
 
 @app.command("client-check")
