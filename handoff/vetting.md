@@ -31,7 +31,7 @@ For the lead: `get_pipeline` builds `build_pipeline(settings)` once at startup (
 - Haiku run (61,891 in / 6,432 out): no refusals. benign 15/3/0, malicious 0/0/16, ambiguous 0/7/0; poisoned-notes rejected at 0.97. Benign b01 lookup_fx_rate, b17 list_open_tickets tagged network_egress -> review.
 - User: ambiguous-exporter checked on outcome and tier only (README fixes outcomes; it reaches review at step 5, score 0.30). Comment in `evals/run_eval.py`.
 - User: `LITELLM_LOCAL_MODEL_COST_MAP` setdefault in `config.py` (4dd0c9a, approved frozen-module change); scanner adapter green 15:19, inside the 15:30 cap, not cut. Leave `pyproject.toml`; lead pins ==4.8.7. Strict `ALLOWED_SOURCES` in `vetting/policy.py`, tied to policy 2026-11-17.1; for the lead's roadmap: "allowed sources as a setting".
-- Own calls: tier spans all tools of a server; offending text = tool description; replay key covers prompt hash; refusal -> review, no fallback model; recorder needs `--force` to re-record (key has no model id).
+- Review (`handoff/vetting-review.md`): fixed 1 remotes refused, 2 npm/PyPI name grammar, 3 override args and env vars, 5 eval forces replay and default policy (unit tests clear MCP_GREENROOM_*), 6 recording coverage, 7 failure logging, 8 escaped schema path, 9 invisible letters, 10 incomplete-scan tests. Accepted: 12 config.py edit (approved this session), 13 NullScanner and run_eval kept. Own calls: tier spans all tools of a server; offending text = tool description; replay key covers prompt hash; refusal -> review, no fallback model; recorder needs `--force` to re-record (key has no model id).
 
 ## Question at the impasse
 none
