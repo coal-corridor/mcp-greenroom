@@ -3,8 +3,12 @@
 import pytest
 
 from mcp_greenroom.models import Capability, Outcome, Tool
+from mcp_greenroom.vetting.pipeline import VettingPipeline
+from tests.fakes import FakeProvider, FakeScanner
 from tests.unit.helpers import load_sample, with_tools
 from tests.unit.test_decision_order import (
+    POLICY,
+    BrokenScanner,
     low_results,
     pipeline,
     risk,
@@ -70,10 +74,6 @@ ODD = [
 
 @pytest.mark.parametrize("behaviour", ODD)
 def test_provider_failure_never_approves(behaviour: str) -> None:
-    from mcp_greenroom.vetting.pipeline import VettingPipeline
-    from tests.fakes import FakeScanner
-    from tests.unit.test_decision_order import POLICY
-
     pipe = VettingPipeline(OddProvider(behaviour), FakeScanner(), POLICY)  # type: ignore[arg-type]
     decision = pipe.vet(PAYMENTS)
     assert decision.outcome is Outcome.HUMAN_REVIEW
@@ -84,3 +84,15 @@ def test_provider_failure_never_approves(behaviour: str) -> None:
 def test_named_provider_failures_never_approve(unavailable: bool) -> None:
     decision = pipeline({}, unavailable=unavailable).vet(PAYMENTS)
     assert decision.outcome is Outcome.HUMAN_REVIEW
+
+
+@pytest.mark.parametrize("severity", ["LOW", "MEDIUM", "HIGH", "CRITICAL"])
+def test_a_scanner_match_never_approves_and_never_rejects_alone(severity: str) -> None:
+    match = scanner_match("get_balance").model_copy(update={"severity": severity})
+    decision = pipeline(low_results(PAYMENTS), findings=[match]).vet(PAYMENTS)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+
+
+def test_a_scanner_failure_never_approves() -> None:
+    pipe = VettingPipeline(FakeProvider(low_results(PAYMENTS)), BrokenScanner(), POLICY)
+    assert pipe.vet(PAYMENTS).outcome is Outcome.HUMAN_REVIEW
