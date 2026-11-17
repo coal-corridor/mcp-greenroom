@@ -89,7 +89,7 @@ A brief and a handoff note per session, the note printed into the next session b
 
 ## Timeline
 
-From the time ledger in `session-log.md`. One sitting. No phase was replayed.
+From the time ledger. One sitting. No phase was replayed.
 
 | Phase | Budget | Start | End | Notes |
 | --- | --- | --- | --- | --- |
@@ -100,7 +100,7 @@ From the time ledger in `session-log.md`. One sitting. No phase was replayed.
 | Evidence | 2:25 to 2:55 | 16:05 | Open until its pull request merges | A second lead session, in auto mode. First evidence commit at 16:13 |
 | Clean clone | 2:55 to 3:00 | | | Fresh clones at 16:09 and after 16:17, and one on the merged state (`verify.md`) |
 
-**Building time**: 164 minutes to  when integration ended.
+**Building time**: 164 minutes.
 
 ## Review findings
 

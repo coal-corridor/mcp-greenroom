@@ -169,6 +169,3 @@ names its own extra dependency in `stretch.md`. Anything else: stop and ask.
 lists them by area, with what to take from each. Each area brief names at most
 two to read first. Copied code keeps its licence notice and is listed in
 `agentic-workflow.md`.
-- `docs/spec-notes.md` holds the research facts, the rationale and the
-production routes. It is not needed to build. Read it when writing `design.md`,
-`decisions.md`, `operate.md` and `verify.md`.

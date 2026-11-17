@@ -111,7 +111,7 @@ The one key, `MCP_GREENROOM_MODEL_API_KEY`, is needed only for the recording run
 
 ## Deployment to cloud
 
-In words only. None of this was built. Sources: `docs/spec-notes.md` section 3, `deploy/README.md`, `ROADMAP.md` Phase 2 item 11.
+In words only. None of this was built. Sources: `deploy/README.md`, `ROADMAP.md` Phase 2 item 11.
 
 - **Build.** One image from `uv.lock`, as `Dockerfile` does today, scanned before it is pushed.
 - **Verify.** The same `./scripts/verify.sh` is the gate at every step: on the laptop, on each pull request, and before each promotion. The evaluation gate reruns on every change of model, prompt or threshold.
