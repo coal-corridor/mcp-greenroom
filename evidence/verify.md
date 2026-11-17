@@ -185,28 +185,31 @@ Next: mcp-greenroom status 8736d556-a9df-4ea4-8763-ee4ae6e33382
 
 ### Safe failure 4, separation of duties: the submitter cannot review their own case
 
+Re-run on 17 Nov after the quoting fix in the demo script.
+
 == Status of ambiguous-exporter 2.0.0 (submitted by riley, a reviewer) (expect exit 10)
-$ uv run --quiet mcp-greenroom status 7e61298b-5824-4ee3-b9fb-d773c4532da7 --token dev-sam
+$ uv run --quiet mcp-greenroom status 13cd5929-3186-4d90-b170-a1c6afb6196e --token dev-sam
 ! needs review  com.examplebank/ambiguous-exporter 2.0.0  tier medium
   classifier.uncertain: Risk score 0.30 is not below the approve threshold 0.20. (tool export_report)
-Next: mcp-greenroom status 7e61298b-5824-4ee3-b9fb-d773c4532da7
+Next: mcp-greenroom status 13cd5929-3186-4d90-b170-a1c6afb6196e
 -> exit 10, as expected
 
 == riley reviews their own case: refused (expect exit 20)
-$ uv run --quiet mcp-greenroom review 7e61298b-5824-4ee3-b9fb-d773c4532da7 --approve --note Looks fine to me. --token dev-riley
+$ uv run --quiet mcp-greenroom review 13cd5929-3186-4d90-b170-a1c6afb6196e --approve --note "Looks fine to me." --token dev-riley
 Error: HTTP 403 [review.reviewer_is_submitter]: Review refused: the reviewer submitted this version. Another reviewer must decide it.
   Received: refused by the API (403)
   Next: Ask a different reviewer: a reviewer is never the submitter.
 -> exit 20, as expected
 
 == sam reviews it: recorded (expect exit 0)
-$ uv run --quiet mcp-greenroom review 7e61298b-5824-4ee3-b9fb-d773c4532da7 --approve --note Egress goes to our own host only. --token dev-sam
+$ uv run --quiet mcp-greenroom review 13cd5929-3186-4d90-b170-a1c6afb6196e --approve --note "Egress goes to our own host only." --token dev-sam
 ✓ approved  com.examplebank/ambiguous-exporter 2.0.0  tier medium
   review.approved: Egress goes to our own host only.
-Next: mcp-greenroom status 7e61298b-5824-4ee3-b9fb-d773c4532da7
+Next: mcp-greenroom status 13cd5929-3186-4d90-b170-a1c6afb6196e
 -> exit 0, as expected
 
 == The audit trail names who decided, and under which policy (expect exit 0)
+
 $ uv run --quiet mcp-greenroom audit 7e61298b-5824-4ee3-b9fb-d773c4532da7 --token dev-sam
 2026-11-17T05:38:18.655429Z  riley  submitted  policy 2026-11-17.1
 2026-11-17T05:38:18.655429Z  policy  policy_decision  policy 2026-11-17.1
