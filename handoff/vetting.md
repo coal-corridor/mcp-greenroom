@@ -13,8 +13,7 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 5. About 40 labelled cases in `evals/dataset*`, `evals/run_eval.py` gate and report with scanner column, sample-outcome table test. User records, then full verify and report for `evidence/verify.md`.
 
 ## Done
-- Item 1 spike (result under Decisions). Item 2: step 1 `vetting/validation.py` `validate()` raises Refusal: `validation.version_not_pinned`, `.schema`, `.source_not_allowed`, `.no_tools` (`tests/unit/test_validation.py`); step 2 `vetting/rules.py` `hidden_characters()` -> `rule.hidden_characters` (`tests/unit/test_rules.py`).
-- Fingerprint under reordering: already covered by `tests/shared/test_fingerprint.py` (caae224); not duplicated.
+- Item 1 spike (result under Decisions). Item 2: step 1 `vetting/validation.py` `validate()` raises Refusal: `validation.version_not_pinned`, `.schema`, `.source_not_allowed`, `.no_tools` (`tests/unit/test_validation.py`); step 2 `vetting/rules.py` `hidden_characters()` -> `rule.hidden_characters` (`tests/unit/test_rules.py`). Fingerprint under reordering: already covered by `tests/shared/test_fingerprint.py` (caae224); not duplicated.
 
 ## Checks
 ```
