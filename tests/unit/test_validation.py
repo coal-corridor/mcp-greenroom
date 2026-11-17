@@ -208,3 +208,36 @@ def test_a_pypi_identifier_outside_the_name_grammar_is_refused(identifier: str) 
 )
 def test_a_plain_package_name_passes(registry: str, identifier: str) -> None:
     validate(with_package(registryType=registry, registryBaseUrl=None, identifier=identifier))
+
+
+@pytest.mark.parametrize(
+    ("field", "argument"),
+    [
+        ("runtimeArguments", {"type": "named", "name": "--registry", "value": "https://x.example"}),
+        ("runtimeArguments", {"type": "positional", "value": "--registry=https://x.example"}),
+        (
+            "packageArguments",
+            {"type": "named", "name": "--index-url", "value": "https://x.example"},
+        ),
+        ("runtimeArguments", {"type": "named", "name": "--extra-index-url", "value": "https://x"}),
+        ("runtimeArguments", {"type": "positional", "value": "-i"}),
+        ("runtimeArguments", {"type": "named", "name": "--find-links", "value": "https://x"}),
+    ],
+)
+def test_a_registry_override_argument_is_refused(field: str, argument: dict) -> None:
+    with pytest.raises(Refusal) as refused:
+        validate(with_package(**{field: [argument]}))
+    assert refused.value.rule_id == "validation.source_not_allowed"
+
+
+@pytest.mark.parametrize("name", ["NPM_CONFIG_REGISTRY", "npm_config_registry", "PIP_INDEX_URL"])
+def test_a_registry_override_environment_variable_is_refused(name: str) -> None:
+    variables = [{"name": name, "value": "https://x.example"}]
+    with pytest.raises(Refusal) as refused:
+        validate(with_package(environmentVariables=variables))
+    assert refused.value.rule_id == "validation.source_not_allowed"
+
+
+def test_ordinary_arguments_pass() -> None:
+    arguments = [{"type": "named", "name": "--read-only", "value": "true"}]
+    validate(with_package(runtimeArguments=arguments, packageArguments=arguments))
