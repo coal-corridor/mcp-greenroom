@@ -8,7 +8,7 @@ from mcp_greenroom.config import Settings
 from mcp_greenroom.models import Outcome
 from mcp_greenroom.risk.live import LiveProvider
 from mcp_greenroom.risk.replay import ReplayProvider
-from mcp_greenroom.scanner.null import NullScanner
+from mcp_greenroom.scanner.yara import YaraScanner
 from mcp_greenroom.vetting.factory import build_pipeline
 from tests.unit.helpers import load_sample
 
@@ -21,7 +21,7 @@ def test_the_default_pipeline_replays_recordings() -> None:
     pipe = build_pipeline(defaults())
     assert isinstance(pipe.provider, ReplayProvider)
     assert pipe.provider.recordings_dir == Path("evals/recordings")
-    assert isinstance(pipe.scanner, NullScanner)
+    assert isinstance(pipe.scanner, YaraScanner)
     assert pipe.policy.reject_threshold == 0.80
     assert pipe.policy.approve_threshold == 0.20
     assert pipe.policy.policy_version == defaults().policy_version
