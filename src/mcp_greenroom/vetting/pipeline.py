@@ -153,6 +153,15 @@ class VettingPipeline:
                 )
             return self._decision(Outcome.HUMAN_REVIEW, tier, reasons, scanned, risks)
 
+        # Step 7. Tier medium or high: human review.
+        if tier is not Tier.LOW:
+            capabilities = sorted({cap.value for r in risks for cap in r.capabilities})
+            reason = Reason(
+                code=f"tier.{tier.value}",
+                message=f"Tier {tier.value}, from capabilities: {', '.join(capabilities)}.",
+            )
+            return self._decision(Outcome.HUMAN_REVIEW, tier, [reason], [], risks)
+
         return self._decision(
             Outcome.HUMAN_REVIEW,
             tier,
