@@ -63,6 +63,8 @@ class SqlStore:
     def __init__(self, database_url: str, snapshot_path: Path) -> None:
         self._engine = create_engine(database_url, poolclass=NullPool)
         self._snapshot_path = snapshot_path
+        self.snapshot_error: str | None = None  # why the last write failed; None after success
+        self.snapshot_generated_at: str | None = None
 
     @contextmanager
     def _tx(self) -> Iterator[Connection]:
@@ -240,8 +242,16 @@ class SqlStore:
             self.refresh_snapshot()
 
     def refresh_snapshot(self) -> None:
-        """Write the last-good copy. A failure is logged: the publish itself stands."""
+        """Write the last-good copy. A failure is logged and kept for readiness.
+
+        The publish itself stands either way.
+        """
+        generated_at = datetime.now(UTC)
         try:
-            write_snapshot(self._snapshot_path, self.published(), datetime.now(UTC))
+            write_snapshot(self._snapshot_path, self.published(), generated_at)
         except (OSError, StoreUnavailable) as exc:
-            log_event("snapshot.write_failed", logging.ERROR, error=type(exc).__name__)
+            self.snapshot_error = f"{type(exc).__name__} writing {self._snapshot_path}"
+            log_event("snapshot.write_failed", logging.ERROR, error=self.snapshot_error)
+        else:
+            self.snapshot_error = None
+            self.snapshot_generated_at = generated_at.isoformat()

@@ -26,7 +26,14 @@ def readyz(request: Request) -> JSONResponse:
         except StoreUnavailable as exc:
             reason = f"store unavailable: {exc}"
         else:
-            return JSONResponse({"ready": True})
+            if store.snapshot_error is None:
+                return JSONResponse(
+                    {"ready": True, "snapshot_generated_at": store.snapshot_generated_at}
+                )
+            reason = (
+                f"last-good copy not written ({store.snapshot_error}): "
+                "degrade mode would serve a stale list"
+            )
     return JSONResponse(
         {"ready": False, "reason": reason}, status_code=status.HTTP_503_SERVICE_UNAVAILABLE
     )
