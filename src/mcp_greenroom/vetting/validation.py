@@ -14,7 +14,7 @@ import jsonschema
 from jsonschema.exceptions import best_match
 
 from mcp_greenroom.interfaces import Refusal
-from mcp_greenroom.models import Submission
+from mcp_greenroom.models import Submission, Tool
 
 MAX_RECEIVED = 80
 SCHEMA_PATH = Path(__file__).resolve().parents[3] / "contracts" / "server.schema.json"
@@ -126,8 +126,19 @@ def _check_sources(server: dict[str, Any]) -> None:
             )
 
 
+def _check_tools(tools: list[Tool]) -> None:
+    if not tools:
+        raise _refuse(
+            "validation.no_tools",
+            "No tools: the submission lists no tool definitions",
+            tools,
+            "Send the server's tools/list output in 'tools' and submit again.",
+        )
+
+
 def validate(submission: Submission) -> None:
     """Raise Refusal when the submission breaks a step-1 rule. Return None when it passes."""
     _check_versions(submission.server)
     _check_schema(submission.server)
     _check_sources(submission.server)
+    _check_tools(submission.tools)
