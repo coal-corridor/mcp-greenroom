@@ -18,6 +18,7 @@ from mcp_greenroom.cli_output import (
     NAME,
     exit_code,
     fail,
+    inert,
     next_step,
     show_decision,
     stdout_console,
@@ -234,7 +235,9 @@ def client_check(
     out.print(Text("Simulation of Amp's documented registry check, not Amp itself."))
     for verdict in verdicts:
         mark = ("✓ allowed", "green") if verdict.allowed else ("✗ blocked", "red")
-        out.print(Text.assemble(mark, "  ", verdict.server, "  ", (verdict.reason, "dim")))
+        reason = inert(verdict.reason)
+        reason.stylize("dim")
+        out.print(Text.assemble(mark, "  ", inert(verdict.server), "  ", reason))
     if all(v.allowed for v in verdicts):
         next_step(f"{NAME} list, to see every approved version")
         return

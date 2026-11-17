@@ -36,10 +36,11 @@ def stderr_console() -> Console:
 
 
 def fail(what: str, received: str, todo: str, code: int = EXIT_FAILURE) -> NoReturn:
-    """Print a three-part error to standard error and exit."""
+    """Print a three-part error to standard error and exit. What and received may carry
+    text from the API or a file, so both are printed inert."""
     err = stderr_console()
-    err.print(Text.assemble(("Error: ", "bold red"), what))
-    err.print(Text(f"  Received: {received}"))
+    err.print(Text.assemble(("Error: ", "bold red"), inert(what)))
+    err.print(Text("  Received: ").append(inert(received)))
     err.print(Text(f"  Next: {todo}"))
     raise typer.Exit(code)
 
