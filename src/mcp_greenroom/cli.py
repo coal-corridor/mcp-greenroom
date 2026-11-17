@@ -11,6 +11,7 @@ import typer
 from rich.table import Table
 from rich.text import Text
 
+from mcp_greenroom.cli_input import InputError, read_submission
 from mcp_greenroom.cli_output import (
     EXIT_FAILURE,
     EXIT_OK,
@@ -157,13 +158,9 @@ def submit(
     Example: mcp-greenroom submit sample-data/servers/payments-readonly.json
     """
     try:
-        payload = json.loads(file.read_text(encoding="utf-8"))
-    except (OSError, ValueError) as exc:
-        fail(
-            "Could not read the submission file.",
-            f"{file} ({type(exc).__name__})",
-            "Pass a JSON file with 'server' and 'tools'.",
-        )
+        payload = read_submission(file)
+    except InputError as exc:
+        fail(exc.what, exc.received, exc.next_step)
     body = _call("POST", "/submissions", api, token, as_json, json=payload)
     raise typer.Exit(exit_code(body) if as_json else show_decision(body))
 
