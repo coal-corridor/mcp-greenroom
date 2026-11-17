@@ -16,6 +16,7 @@ from mcp_greenroom.cli_output import (
     EXIT_OK,
     EXIT_REJECTED,
     NAME,
+    error_body,
     exit_code,
     fail,
     fail_from,
@@ -264,6 +265,36 @@ def list_servers(
     out.print(Text(f"{len(records)} approved version(s)."))
     next_step(f"{NAME} client-check CONFIG, to see what a client would allow")
     raise typer.Exit(EXIT_OK)
+
+
+@app.command()
+def health(api: ApiOption = None, token: TokenOption = None) -> None:
+    """Show liveness, readiness and registry mode, one line each. Exit 1 unless all are fine.
+
+    Example: mcp-greenroom health
+    """
+    live = _send("GET", "/livez", api, token).is_success
+    ready_response = _send("GET", "/readyz", api, token)
+    ready = ready_response.is_success
+    listing = _send("GET", "/v0.1/servers", api, token, params={"limit": 1})
+    degraded = listing.headers.get(DEGRADED_HEADER, "").lower() == "true"
+    out = stdout_console()
+    out.print(Text("✓ live", "green") if live else Text("✗ not live", "red"))
+    if ready:
+        out.print(Text("✓ ready", "green"))
+    else:
+        reason = error_body(ready_response).get("reason") or f"HTTP {ready_response.status_code}"
+        out.print(Text("✗ not ready: ", "red").append(inert(reason)))
+    if not listing.is_success:
+        out.print(Text(f"✗ registry list failed: HTTP {listing.status_code}", "red"))
+    elif degraded:
+        since = listing.headers.get(GENERATED_AT_HEADER, "an unknown time")
+        out.print(Text("! registry degraded: last-good copy from ", "yellow").append(inert(since)))
+    else:
+        out.print(Text("✓ registry normal", "green"))
+    healthy = live and ready and listing.is_success and not degraded
+    next_step(f"{NAME} list" if healthy else "check the API log; 'make run' restarts the service")
+    raise typer.Exit(EXIT_OK if healthy else EXIT_FAILURE)
 
 
 @app.command("client-check")
