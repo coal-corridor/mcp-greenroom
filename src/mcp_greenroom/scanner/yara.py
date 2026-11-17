@@ -10,6 +10,7 @@ import asyncio
 import json
 import re
 import tempfile
+import threading
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
@@ -32,7 +33,13 @@ def _slug(threat: str) -> str:
 
 
 class YaraScanner:
-    """Implements interfaces.Scanner."""
+    """Implements interfaces.Scanner.
+
+    One instance is shared by the API's request threads. The scanner package's thread safety
+    is not verified, so one scan runs at a time, across all instances.
+    """
+
+    _lock = threading.Lock()
 
     def __init__(self) -> None:
         # Imported here: the package is heavy (about 2.5 s), and only this adapter needs it.
@@ -55,7 +62,8 @@ class YaraScanner:
 
     def scan(self, tools: Sequence[Tool]) -> list[Finding]:
         try:
-            results = self._run(tools)
+            with self._lock:
+                results = self._run(tools)
             findings: list[Finding] = []
             for result in results:
                 if result.get("status") != "completed" or result.get("analyzer_errors"):
