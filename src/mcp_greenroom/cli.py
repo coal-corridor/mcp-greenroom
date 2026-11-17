@@ -4,8 +4,8 @@ import json
 import sys
 import unicodedata
 from pathlib import Path
-from urllib.parse import quote
 from typing import Annotated, Any, NoReturn
+from urllib.parse import quote
 
 import httpx
 import typer
