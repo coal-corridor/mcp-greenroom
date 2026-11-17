@@ -1,0 +1,15 @@
+# Local run of the slice in a container: docker compose up --build, then
+#   uv run mcp-greenroom health --api http://127.0.0.1:8000
+services:
+  api:
+    build: .
+    ports:
+      - "127.0.0.1:8000:8000"  # localhost only: dev identities must not be reachable from outside
+    environment:
+      MCP_GREENROOM_ENV: dev
+      MCP_GREENROOM_RISK_PROVIDER: replay
+    volumes:
+      - greenroom-data:/data  # SQLite store and last-good snapshot survive a restart
+
+volumes:
+  greenroom-data:
