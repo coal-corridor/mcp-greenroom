@@ -8,7 +8,7 @@ from collections.abc import Sequence
 
 import pytest
 
-from mcp_greenroom.interfaces import Refusal
+from mcp_greenroom.interfaces import Refusal, ScannerError
 from mcp_greenroom.models import (
     Capability,
     Decision,
@@ -151,3 +151,30 @@ def test_step_5_an_uncertain_score_sends_a_low_tier_server_to_human_review(score
     assert codes(decision) == ["classifier.uncertain"]
     assert decision.reasons[0].tool_name == "list_payments"
     assert decision.tier is Tier.LOW
+
+
+# Step 6. A scanner rule matched on any tool: human review.
+
+
+class BrokenScanner:
+    def scan(self, tools: Sequence[Tool]) -> list[Finding]:
+        raise ScannerError("scanner output unreadable")
+
+
+def test_step_6_a_scanner_match_sends_a_low_tier_server_to_human_review() -> None:
+    submission = load_sample("payments-readonly")
+    match = scanner_match("list_payments")
+    decision = pipeline(low_results(submission), findings=[match]).vet(submission)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert codes(decision) == ["scanner.match"]
+    assert decision.reasons[0].tool_name == "list_payments"
+    assert match in decision.findings
+    assert decision.tier is Tier.LOW
+
+
+def test_step_6_a_scanner_that_fails_sends_to_human_review() -> None:
+    submission = load_sample("payments-readonly")
+    provider = FakeProvider(low_results(submission))
+    decision = VettingPipeline(provider, BrokenScanner(), POLICY).vet(submission)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert codes(decision) == ["scanner.unavailable"]
