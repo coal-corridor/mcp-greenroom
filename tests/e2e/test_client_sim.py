@@ -45,3 +45,14 @@ def test_listed_server_is_allowed() -> None:
     allowed = {v.server for v in check_config(AMP_CONFIG, _registry(payments)) if v.allowed}
 
     assert "payments" in allowed
+
+
+def test_unlisted_server_is_blocked() -> None:
+    payments = _record(
+        "com.examplebank/payments-readonly", "npm", "@examplebank/payments-readonly-mcp"
+    )
+
+    verdicts = {v.server: v for v in check_config(AMP_CONFIG, _registry(payments))}
+
+    assert verdicts["notes"].allowed is False
+    assert verdicts["payments"].allowed is True
