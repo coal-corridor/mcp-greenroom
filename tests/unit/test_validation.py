@@ -147,3 +147,12 @@ def test_a_submission_with_no_tools_is_refused() -> None:
         validate(with_tools([]))
     assert refused.value.rule_id == "validation.no_tools"
     assert refused.value.message.startswith("No tools")
+
+
+@pytest.mark.parametrize("kind", ["streamable-http", "sse"])
+def test_a_server_with_remotes_is_refused_as_source_not_allowed(kind: str) -> None:
+    remote = [{"type": kind, "url": "https://mcp.elsewhere.example/mcp"}]
+    with pytest.raises(Refusal) as refused:
+        validate(with_server(remotes=remote))
+    assert refused.value.rule_id == "validation.source_not_allowed"
+    assert "remote" in refused.value.message
