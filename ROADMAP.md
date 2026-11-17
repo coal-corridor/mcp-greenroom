@@ -88,6 +88,7 @@ One line each. The finding and the user's decision are in the review file named.
 - Retry `ensure_schema` after a failed start, and stop an empty database at startup from wiping the last-good copy (registry review 7, also in `operate.md`).
 - Build the app lazily instead of at import time, so tests never read a local `.env` (registry review 9).
 - Report only the `uq_decision_seq` violation as "not pending"; any other `IntegrityError` reads the same today (registry review 11).
+- Stamp each decision with the policy version plus a hash of the thresholds and require-human flag, so any policy change gives a new version; today startup only refuses a change away from the defaults under the default version (vetting review 4).
 - Refuse duplicate tool names at step 1 (`validation.duplicate_tool`); today the evidence can name the wrong tool (vetting review 11).
 - Build the install command ourselves instead of refusing a list of registry-override arguments, which cannot be complete (vetting review 3).
 - Allowed package sources as a setting; today a strict list in `vetting/policy.py` tied to policy 2026-11-17.1 (vetting handoff).
