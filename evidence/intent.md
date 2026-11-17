@@ -1,7 +1,5 @@
 # Intent: MCP Greenroom
 
-Status: draft, written before the timed build. Platform claims checked against vendor documentation on 16 Nov 2026.
-
 ## Problem
 
 An MCP server gives a coding agent new tools, and the agent reads each tool's description as instructions. A poisoned description is therefore an attack path. A regulated enterprise must be able to say who approved a server, on what evidence and under which policy.
@@ -54,16 +52,16 @@ Each one can be checked by an assessor from a clean checkout.
 
 1. **Main workflow.** A benign sample server is submitted, vetted, approved and listed on the registry endpoint. A client simulator then allows it and blocks an unlisted server.
 2. **Standard format.** The registry response validates against the official MCP registry OpenAPI schema.
-3. **Five safe failures**, each shown by the demo script and covered by a test:
-   - a malformed submission is refused with a clear error (validation rejection);
-   - a poisoned tool description is rejected with the reason and the evidence (guarded failure);
-   - an input the classifier cannot judge goes to human review (abstain);
-   - a submitter cannot approve their own server (separation of duties);
-   - with the store down, the registry endpoint serves the last good list and reports that it is degraded (degrade mode).
+3. **Safe failures**, each shown by the demo script and covered by a test:
+   - **validation rejection**: a malformed submission is refused with a clear error;
+   - **guarded failure**: a poisoned tool description is rejected with the reason and the evidence;
+   - **abstain**: an input the classifier cannot judge goes to human review;
+   - **separation of duties**: a submitter cannot approve their own server;
+   - **degrade mode**: with the store down, the registry endpoint serves the last good list and reports that it is degraded.
 4. **Classifier evaluation.** A labelled synthetic set runs inside the check command. Hard gate: no malicious sample is auto-approved.
 5. **One check command** passes with no network access and no credentials.
 
-Invariants that hold on every path:
+## Invariants
 
 - No server is approved when a rule has stopped it, or when the classifier failed or abstained.
 - Only approved servers appear on the registry endpoint.

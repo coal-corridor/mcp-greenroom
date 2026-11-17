@@ -1,7 +1,5 @@
 # Operations: MCP Greenroom
 
-Written from the running service on 17 Nov 2026, at commit `f117754`. Nothing here was deployed: the slice runs on one machine.
-
 ## Run
 
 From a fresh clone, as tested in [`verify.md`](verify.md):
@@ -111,7 +109,7 @@ The one key, `MCP_GREENROOM_MODEL_API_KEY`, is needed only for the recording run
 
 - Scanner thread safety: not verified. One scanner instance (the Cisco MCP Scanner's `StaticAnalyzer`) is built at startup and shared by every request thread. Whether the package is safe to share was not checked. The adapter holds a lock, so one scan runs at a time (`src/mcp_greenroom/scanner/yara.py`, test `tests/unit/test_scanner_lock.py`). Effect: concurrent submissions queue on the scan. Production route: confirm the package's thread safety, then drop the lock or keep a small pool of scanners.
 
-## Local to cloud
+## Deployment to cloud
 
 In words only. None of this was built. Sources: `docs/spec-notes.md` section 3, `deploy/README.md`, `ROADMAP.md` Phase 2 item 11.
 

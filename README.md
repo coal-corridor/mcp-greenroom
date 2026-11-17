@@ -1,6 +1,4 @@
-<h3 align="center">
-MCP Greenroom: vetted registry for MCP servers
-</h3>
+# MCP Greenroom: vetted registry for MCP servers
 
 ## What is MCP Greenroom?
 
@@ -11,19 +9,22 @@ It provides an in-house intake and risk review for MCP servers, and publishes th
 
 An MCP server gives a coding agent new tools, and the agent reads each tool's description as instructions. A poisoned description is an attack path. A regulated enterprise must be able to control what MCP servers are available for the developers via a curated registry, with a submission approval process, evidence, and policy.
 
+
 ## How it works
+![alt text](system-diagram.png)
 
-A developer submits one version of a server with its tool list. MCP Greenroom then:
+1. A developer submits a specific version of an MCP server via the `mcp-greenroom` CLI.
+2. The `mcp-greenroom` CLI sends the submission to the service.
+3. The MCP Greenroom service validates it, runs its check rules, obtains an LLM risk classifier score, and runs the Cisco MCP Scanner (YARA rules).
+4. The MCP Greenroom decides to reject the submission, approve it by policy, or assign it to a human reviewer.
+5. A reviewer approves or declines the submission.
+6. If the version is approved, it is published to the MCP Greenroom registry.
+7. An agentic platform reads the registry and allows only approved MCP servers.
 
-1. validates the submission and applies deterministic rules (pinned version, allowed package source, no hidden characters);
-2. runs scanner rules and has a classifier score each tool description for injection risk and tag its capabilities;
-3. rejects the version, approves it by policy, or sends it to a human reviewer, who can never be the submitter;
-4. publishes approved versions on `GET /v0.1/servers` in the official MCP registry format, so a platform that reads a registry enforces the list with no custom code.
-
+## Workflow
 ```text
 submit -> validate -> rules -> scanner -> classifier -> decide -> (human review) -> publish -> GET /v0.1/servers
 ```
-
 Rules run before the classifier, and the classifier can escalate a case but never clear one. Every decision leaves an append-only audit record. By default the classifier replays recorded model responses, so the workflow and every check run from a clean checkout with no credentials and no network.
 
 ## Prerequisites
@@ -51,49 +52,49 @@ uv sync
 make run
 ```
 
-The API listens on `http://127.0.0.1:8000`. The classifier replays recorded model answers and the scanner runs offline, so the service needs no key. Every setting has a safe default; the variables are listed in [`evidence/operate.md`](evidence/operate.md).
+- The API listens on `http://127.0.0.1:8000`. 
 
+- The classifier replays recorded model answers and the scanner runs offline.
+
+- Every setting has a safe default.
+
+## Docker
+`docker compose up --build` serves the same API on `127.0.0.1:8000`.
+
+## Demo
 To see everything at once, `./scripts/demo.sh` starts its own service on port 8765, walks the main path and the five safe failures with the CLI, checks each exit code and stops the service.
 
-Container: `docker compose up --build` serves the same API on `127.0.0.1:8000`.
+## Verification
 
-## Check
-
-```sh
-./scripts/verify.sh
-```
-
-Lint, type check, tests and the classifier evaluation gate, with no network and no credentials. It exits non-zero if any stage fails. `./scripts/verify.sh quick` runs lint and types only; `lint`, `types`, `test` and `eval` run one stage. From a fresh clone on 17 Nov 2026:
-
-```text
-verify summary
-  stage  result time
-  lint   pass   0.1s
-  types  pass   5.9s
-  test   pass   23.4s
-  eval   pass   3.3s
-
-verify: all requested stages passed or were skipped.
-```
+- `./scripts/verify.sh` - lint, type check, tests and the classifier evaluation gate, with no network and no credentials, exits non-zero if any stage fails 
+- `./scripts/verify.sh quick` - runs lint and types only
+- `lint`, `types`, `test` and `eval` run one stage
 
 ## Example workflow
 
-The main path: a developer submits a benign, read-only server, it is approved by policy and listed, and a client simulator allows it while blocking an unlisted one. The input is [`sample-data/servers/payments-readonly.json`](sample-data/servers/payments-readonly.json): a `server.json` record (`com.examplebank/payments-readonly` 1.2.0, one npm package) and two tools, `get_balance` and `list_payments`.
+The main path: a developer submits a benign, read-only server, it is approved by policy and listed, and a client simulator allows it while blocking an unlisted one.
+
+ The input is [`sample-data/servers/payments-readonly.json`](sample-data/servers/payments-readonly.json): a `server.json` record (`com.examplebank/payments-readonly` 1.2.0, one npm package) and two tools, `get_balance` and `list_payments`.
 
 With `make run` in another terminal:
 
 ```text
 $ uv run mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+
 ✓ approved  com.examplebank/payments-readonly 1.2.0  tier low
   policy.tier_low: Tier low, every risk score below 0.20, no rule or scanner match.
 Next: mcp-greenroom status 2c5c37e7-d77a-45a8-8841-c8b779cb95ae
 (exit 0)
+
 $ uv run mcp-greenroom list
+
   com.examplebank/payments-readonly 1.2.0
 1 approved version(s).
 Next: mcp-greenroom client-check CONFIG, to see what a client would allow
 (exit 0)
+
 $ uv run mcp-greenroom client-check sample-data/client-configs/amp-settings.json
+
 Simulation of Amp's documented registry check, not Amp itself.
 ✓ allowed  payments  npm package @examplebank/payments-readonly-mcp is listed
 ✗ blocked  notes  package is not on the registry list
@@ -101,26 +102,30 @@ Next: submit the blocked server with mcp-greenroom submit FILE, or remove it fro
 (exit 20)
 ```
 
-`dev-dana`, `dev-riley` and `dev-sam` are stub tokens that work only in the dev environment; riley and sam are reviewers. Exit codes: 0 done or approved, 1 operational failure, 2 usage error, 10 in human review, 20 rejected, refused or blocked. The five safe failures are in the demo output in [`evidence/verify.md`](evidence/verify.md).
+- `dev-dana`, `dev-riley` and `dev-sam` are stub tokens that work only in the dev environment; *riley* and *sam* are reviewers. 
+- Exit codes: 0 done or approved, 1 operational failure, 2 usage error, 10 in human review, 20 rejected, refused or blocked. 
+- Safe failures are in the demo output in [`evidence/verify.md`](evidence/verify.md).
 
 ## Known limitations
 
-- It vets the tools a submitter declares, not what the running server exposes.
+- Vets the tools a submitter declares, not what the running server exposes.
 - An approval is not bound to the package bytes: the fingerprint covers the manifest and the tool definitions only.
 - By default the classifier knows only the recorded tools. Any other tool goes to a human. The recordings come from one model, `claude-haiku-5-5`, and one prompt version.
 - The evaluation set is 41 synthetic cases. It proves the decision logic on recorded answers, not the model's accuracy in general.
-- Stub identities, SQLite, one process. Nothing is deployed.
+- Stub identities, SQLite, one process.
 - An approved version cannot be withdrawn.
 - The degraded list has no expiry.
 - Amp's check matches package name and registry type, not version, so per-version approval is exact here and not at the client. The client simulator follows public documentation and was never run against Amp or Copilot.
 - Only `GET /v0.1/servers` of the registry API is served. No stretch item was built.
 - Items deferred from the code reviews are listed in [`ROADMAP.md`](ROADMAP.md), with the rest of the route.
 
-## Evidence
+## Specs and roadmap
 
-The evidence pack is in [`evidence/`](evidence/): `intent.md`, `design.md`, `agentic-workflow.md`, `verify.md`, `operate.md`, `decisions.md`. The spec the slice was built against is [`docs/specs/mcp-greenroom.md`](docs/specs/mcp-greenroom.md), with one child spec per area in [`docs/specs/`](docs/specs/). The roadmap is [`ROADMAP.md`](ROADMAP.md).
+The spec the slice was built against is [`docs/specs/mcp-greenroom.md`](docs/specs/mcp-greenroom.md), with one child spec per area in [`docs/specs/`](docs/specs/). 
 
-## Where things are
+The roadmap is [`ROADMAP.md`](ROADMAP.md).
+
+## Repository structure
 
 | Path | Holds |
 | --- | --- |
