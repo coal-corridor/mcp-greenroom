@@ -271,6 +271,30 @@ def status(
     raise typer.Exit(_exit_code(body) if as_json else _show_decision(body))
 
 
+@app.command()
+def review(
+    submission_id: IdArgument,
+    note: Annotated[str, typer.Option("--note", help="Why: recorded with the decision.")],
+    approve: Annotated[bool, typer.Option("--approve", help="Approve the case.")] = False,
+    decline: Annotated[bool, typer.Option("--decline", help="Decline the case.")] = False,
+    api: ApiOption = None,
+    token: TokenOption = None,
+    as_json: JsonOption = False,
+) -> None:
+    """Approve or decline a case in human review. You cannot review your own submission.
+
+    Example: mcp-greenroom review 3f2c9a1e-... --approve --note "Read-only, checked."
+    """
+    if approve == decline:
+        raise typer.BadParameter("give exactly one of --approve or --decline.")
+    payload = {"action": "approve" if approve else "decline", "note": note}
+    path = f"/submissions/{quote(submission_id, safe='')}/review"
+    body = _call("POST", path, api, token, as_json, json=payload)
+    if not as_json:
+        _show_decision(body)
+    raise typer.Exit(EXIT_OK)
+
+
 @app.command("client-check")
 def client_check(
     config: Annotated[Path, typer.Argument(help="Client config file (Amp settings shape).")],
