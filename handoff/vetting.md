@@ -1,6 +1,6 @@
 # Handoff: vetting on area/vetting
 
-State at commit 09a0923 (2026-11-17). Uncommitted files: none. Pull request opened via /open-area-pr.
+State at commit 09a0923 (2026-11-17). Uncommitted files: none. Pull request #4 open.
 
 ## Goal
 Given a submission, the pipeline returns the outcome the decision order demands, with evidence, for every sample and every evaluation case.
@@ -27,8 +27,8 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 For the lead: `get_pipeline` builds `build_pipeline(settings)` once at startup (YARA import ~2.5 s). Known gaps (`handoff/vetting-review.md`): thresholds and require-human can change without the policy version (finding 4, lead decides at integration); duplicate tool names allowed (11, roadmap); the registry-override list cannot be complete (3, roadmap: build the install command ourselves).
 
 ## Decisions and corrections
-- Opus run (61,891 in / 2,873 out): 17/47 refused (16 malicious + search_notes) -> review; gate failed on poisoned-notes. By label (appr/review/rej): benign 17/1/0, malicious 0/12/4, ambiguous 0/6/1.
-- Haiku run (61,891 in / 6,432 out): no refusals. benign 15/3/0, malicious 0/0/16, ambiguous 0/7/0; poisoned-notes rejected at 0.97. Benign b01 lookup_fx_rate, b17 list_open_tickets tagged network_egress -> review.
+- Secret scan on PR #4: gitleaks 8.30.1 `generic-api-key` flagged line 5 of all 47 recordings in 827782a, field `"key"`. False positive: the value is the replay key, a SHA-256 hex digest of prompt version, tool name and description, equal to the file name; the API key was only ever sent in a request header. User approved `.gitleaks.toml` (eedd2ca): default rules plus one allowlist, rule `generic-api-key` only, condition AND of path `^evals/recordings/[^/]+\.json$` and secret `^[0-9a-f]{64}$`.
+- Opus run (61,891 in / 2,873 out): 17/47 refused (16 malicious + search_notes) -> review; gate failed on poisoned-notes. By label (appr/review/rej): benign 17/1/0, malicious 0/12/4, ambiguous 0/6/1. Haiku run (61,891 in / 6,432 out): no refusals. benign 15/3/0, malicious 0/0/16, ambiguous 0/7/0; poisoned-notes rejected at 0.97. Benign b01 lookup_fx_rate, b17 list_open_tickets tagged network_egress -> review.
 - User: ambiguous-exporter checked on outcome and tier only (README fixes outcomes; it reaches review at step 5, score 0.30). Comment in `evals/run_eval.py`.
 - User: `LITELLM_LOCAL_MODEL_COST_MAP` setdefault in `config.py` (4dd0c9a, approved frozen-module change); scanner adapter green 15:19, inside the 15:30 cap, not cut. Leave `pyproject.toml`; lead pins ==4.8.7. Strict `ALLOWED_SOURCES` in `vetting/policy.py`, tied to policy 2026-11-17.1; for the lead's roadmap: "allowed sources as a setting".
 - Review (`handoff/vetting-review.md`): fixed 1 remotes refused, 2 npm/PyPI name grammar, 3 override args and env vars, 5 eval forces replay and default policy (unit tests clear MCP_GREENROOM_*), 6 recording coverage, 7 failure logging, 8 escaped schema path, 9 invisible letters, 10 incomplete-scan tests. Accepted: 12 config.py edit (approved this session), 13 NullScanner and run_eval kept. Own calls: tier spans all tools of a server; offending text = tool description; replay key covers prompt hash; refusal -> review, no fallback model; recorder needs `--force` to re-record (key has no model id).
