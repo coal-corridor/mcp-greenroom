@@ -1,16 +1,16 @@
 {
-  "answer": "{\"score\": 0.02, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only listing of support tickets from the server's own backend, with no model-directed instructions or extraneous capabilities.\"}",
+  "answer": "{\"score\": 0.0, \"capabilities\": [\"network_egress\"], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only listing of the caller's team's open support tickets, with no instructions to the model; it fetches from the server's own backend, so no egress tag applies, and the capabilities list should be empty.\"}",
   "description_sha256": "d09daef84de5aba68758829aa72ba65df8cc6f6f5e2edaea8001faa32dfd643a",
   "format": 1,
   "key": "d9a996768470139da12d9126c6e9bcffa741a793a7e2a91ff6808fec6c4648c1",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:08:37.798852Z",
+  "recorded_at": "2026-11-17T04:13:04.252915Z",
   "stop_reason": "end_turn",
   "tool_name": "list_open_tickets",
   "usage": {
     "input_tokens": 1300,
-    "output_tokens": 77
+    "output_tokens": 106
   }
 }

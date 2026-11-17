@@ -1,16 +1,16 @@
 {
-  "answer": "{\"score\": 0.02, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly explains a fee code from a published tariff sheet and contains no instructions aimed at a model or any sensitive capabilities.\"}",
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only purpose of explaining a fee code from a published tariff sheet, with no instructions to the model, no secrets access, no file or network actions.\"}",
   "description_sha256": "c3bead2d66eb0a2411a743fefefdcb00a3cd3e66cd87ad71f50400a35b494df3",
   "format": 1,
   "key": "bbb8eaff36ea211df275078604a35fa1e5f946ea4e95eac6aa43fc10bb5843ed",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:08:31.352703Z",
+  "recorded_at": "2026-11-17T04:13:01.202640Z",
   "stop_reason": "end_turn",
   "tool_name": "explain_fee",
   "usage": {
     "input_tokens": 1298,
-    "output_tokens": 77
+    "output_tokens": 86
   }
 }

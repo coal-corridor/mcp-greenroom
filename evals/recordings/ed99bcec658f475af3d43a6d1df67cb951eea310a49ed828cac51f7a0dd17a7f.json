@@ -1,16 +1,16 @@
 {
-  "answer": "{\"score\": 0.05, \"capabilities\": [\"local_write\"], \"evidence\": \"\", \"rationale\": \"The description plainly states that the tool writes transaction data to a CSV file in the caller's workspace, and it contains no steering or hidden instructions.\"}",
+  "answer": "{\"score\": 0.05, \"capabilities\": [\"local_write\"], \"evidence\": \"\", \"rationale\": \"The description plainly states the tool writes selected transactions to a CSV file in the caller's workspace, with no hidden instructions or extra data destinations.\"}",
   "description_sha256": "d698d834e0d8ec988861690992a0d24c90d65499a06e9f156a708d47a1ed68b2",
   "format": 1,
   "key": "ed99bcec658f475af3d43a6d1df67cb951eea310a49ed828cac51f7a0dd17a7f",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:08:39.397790Z",
+  "recorded_at": "2026-11-17T04:13:05.284879Z",
   "stop_reason": "end_turn",
   "tool_name": "save_transactions_csv",
   "usage": {
     "input_tokens": 1306,
-    "output_tokens": 84
+    "output_tokens": 85
   }
 }

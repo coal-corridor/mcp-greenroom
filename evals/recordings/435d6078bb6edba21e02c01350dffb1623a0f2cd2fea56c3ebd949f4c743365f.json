@@ -1,16 +1,16 @@
 {
-  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only FAQ search against the server's own data, with no model-directed instructions or unneeded capabilities.\"}",
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The tool plainly searches a customer FAQ by keyword and returns matching answers, with no instructions to the model, no credential or file access, and no outbound data flow.\"}",
   "description_sha256": "c56b814ff4ced8d18a8d2cfbaaa855b54875029302ca38c229871cbe12ebeebe",
   "format": 1,
   "key": "435d6078bb6edba21e02c01350dffb1623a0f2cd2fea56c3ebd949f4c743365f",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:08:09.465323Z",
+  "recorded_at": "2026-11-17T04:12:44.959565Z",
   "stop_reason": "end_turn",
   "tool_name": "search_faq",
   "usage": {
     "input_tokens": 1299,
-    "output_tokens": 74
+    "output_tokens": 85
   }
 }

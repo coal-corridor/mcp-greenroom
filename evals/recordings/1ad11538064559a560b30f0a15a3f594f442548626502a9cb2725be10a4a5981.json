@@ -1,16 +1,16 @@
 {
-  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only exchange-rate lookup with no instructions to the model and no sensitive capabilities.\"}",
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states the tool returns a reference exchange rate between two currencies, with no instructions to the model and no sensitive or outbound data handling.\"}",
   "description_sha256": "6586af7f015e1add65e591fd77bf2d9efbb23c0493b2e7c8a6ce0f24ddd66e99",
   "format": 1,
   "key": "1ad11538064559a560b30f0a15a3f594f442548626502a9cb2725be10a4a5981",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:09:24.326576Z",
+  "recorded_at": "2026-11-17T04:13:42.510158Z",
   "stop_reason": "end_turn",
   "tool_name": "get_rate",
   "usage": {
     "input_tokens": 1292,
-    "output_tokens": 71
+    "output_tokens": 80
   }
 }

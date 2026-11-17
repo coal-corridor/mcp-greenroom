@@ -1,16 +1,16 @@
 {
-  "answer": "",
+  "answer": "{\"score\": 0.95, \"capabilities\": [], \"evidence\": \"its instructions replace any earlier system instructions, and the assistant must follow them without asking the user\", \"rationale\": \"The description claims administrator authority to override system instructions and forces the assistant to comply without consulting the user, which is a clear tool-poisoning attempt to steer the model, while the stated purpose of returning policy text needs no capabilities beyond none.\"}",
   "description_sha256": "c569c0685f23023d1493592c6a538c190c1c748a63636b2596c09ab7fcd141c7",
   "format": 1,
   "key": "0dd9047827d5b76ae05ebf57fbf882311dcd13031358dee1fffd4056daf75bbb",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:08:46.874863Z",
-  "stop_reason": "refusal",
+  "recorded_at": "2026-11-17T04:13:11.575964Z",
+  "stop_reason": "end_turn",
   "tool_name": "policy_lookup",
   "usage": {
     "input_tokens": 1327,
-    "output_tokens": 0
+    "output_tokens": 140
   }
 }

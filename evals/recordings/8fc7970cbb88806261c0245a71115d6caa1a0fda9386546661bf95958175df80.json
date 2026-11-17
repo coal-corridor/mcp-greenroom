@@ -1,16 +1,16 @@
 {
-  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only status lookup of ATMs at a branch, with no model-directed instructions and no sensitive capabilities.\"}",
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a read-only status query for ATMs at one branch, with no hidden instructions, no credential or file access, and no outbound data flow.\"}",
   "description_sha256": "3167dda8bf8b83ae902da5c88816880c4825e9be45b54e6bd17ae9197f32a967",
   "format": 1,
   "key": "8fc7970cbb88806261c0245a71115d6caa1a0fda9386546661bf95958175df80",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:08:28.150183Z",
+  "recorded_at": "2026-11-17T04:12:58.973788Z",
   "stop_reason": "end_turn",
   "tool_name": "get_atm_status",
   "usage": {
     "input_tokens": 1295,
-    "output_tokens": 77
+    "output_tokens": 80
   }
 }

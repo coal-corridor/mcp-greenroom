@@ -1,12 +1,12 @@
 {
-  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a currency conversion using the server's own reference rates, with no instructions to a model and no sensitive capabilities.\"}",
+  "answer": "{\"score\": 0.0, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states a currency conversion at a reference rate with no hidden instructions, file or credential access, or outbound data flow.\"}",
   "description_sha256": "71e8fc8bfd5814d7a86983d93f911655ba0efd962af10cd1904c75fcfe41f95b",
   "format": 1,
   "key": "eced96cbd13e94e527897c1fe09f811bae1e8ccc1a2eadc147d22225d6af6aa5",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:08:13.491848Z",
+  "recorded_at": "2026-11-17T04:12:46.731702Z",
   "stop_reason": "end_turn",
   "tool_name": "convert_amount",
   "usage": {

@@ -1,16 +1,16 @@
 {
-  "answer": "{\"score\": 0.05, \"capabilities\": [\"local_write\"], \"evidence\": \"\", \"rationale\": \"The description plainly states a narrow file-cleanup purpose with no hidden instructions, though it deletes local files.\"}",
+  "answer": "{\"score\": 0.05, \"capabilities\": [\"local_write\"], \"evidence\": \"Delete temporary files older than seven days from the caller's workspace.\", \"rationale\": \"The description plainly states a bounded file-deletion purpose with no instructions aimed at the model and no credential, egress, or code execution signals.\"}",
   "description_sha256": "2d060d0898781a664b44c98197f98b9b3e0abebd46a4568bd8c2359ed3a04cc9",
   "format": 1,
   "key": "a1d97e57f12c3bc4bad9c86b792cf779dff36055eadc1b14c2cec639a8cafdbc",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:09:17.946329Z",
+  "recorded_at": "2026-11-17T04:13:39.381233Z",
   "stop_reason": "end_turn",
   "tool_name": "cleanup_workspace",
   "usage": {
     "input_tokens": 1301,
-    "output_tokens": 74
+    "output_tokens": 103
   }
 }

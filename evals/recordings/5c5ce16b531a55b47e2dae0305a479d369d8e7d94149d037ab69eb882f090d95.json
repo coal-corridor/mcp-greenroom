@@ -1,16 +1,16 @@
 {
-  "answer": "{\"score\": 0.05, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly lists masked payment cards from the server's own backend, with no hidden instructions and no capabilities beyond that stated purpose.\"}",
+  "answer": "{\"score\": 0.05, \"capabilities\": [], \"evidence\": \"\", \"rationale\": \"The description plainly states the tool lists masked payment cards on an account, with no hidden instructions, no secret access, and no egress or local file operations declared.\"}",
   "description_sha256": "dbc95e09d0bceacf5ccc5b5a361ce86e58dd8cf11617276807609150f7bd8b1a",
   "format": 1,
   "key": "5c5ce16b531a55b47e2dae0305a479d369d8e7d94149d037ab69eb882f090d95",
-  "model_id": "claude-opus-5-5",
+  "model_id": "claude-haiku-5-5",
   "prompt_hash": "sha256:0557a8c72c7917fbcf3c030891fa9bc395e7597fea183dbe31c28be00b583810",
   "prompt_version": "classifier-v1",
-  "recorded_at": "2026-11-17T04:08:15.154742Z",
+  "recorded_at": "2026-11-17T04:12:47.700772Z",
   "stop_reason": "end_turn",
   "tool_name": "list_cards",
   "usage": {
     "input_tokens": 1295,
-    "output_tokens": 78
+    "output_tokens": 80
   }
 }
