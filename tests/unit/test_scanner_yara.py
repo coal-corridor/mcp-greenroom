@@ -34,3 +34,20 @@ def test_a_scanner_that_cannot_run_raises_scanner_error(monkeypatch: pytest.Monk
     monkeypatch.setattr(StaticAnalyzer, "scan_tools_file", broken)
     with pytest.raises(ScannerError):
         YaraScanner().scan([Tool(name="t", description="d")])
+
+
+@pytest.mark.parametrize(
+    ("status", "errors"),
+    [("partial", [{"analyzer": "YARA"}]), ("failed", [{"analyzer": "YARA"}]), ("skipped", [])],
+)
+def test_a_scan_that_did_not_complete_raises_scanner_error(
+    monkeypatch: pytest.MonkeyPatch, status: str, errors: list
+) -> None:
+    from mcpscanner.core.analyzers.static_analyzer import StaticAnalyzer
+
+    async def incomplete(self: object, path: object) -> list:
+        return [{"tool_name": "t", "status": status, "findings": [], "analyzer_errors": errors}]
+
+    monkeypatch.setattr(StaticAnalyzer, "scan_tools_file", incomplete)
+    with pytest.raises(ScannerError):
+        YaraScanner().scan([Tool(name="t", description="d")])
