@@ -13,9 +13,7 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 5. About 40 labelled cases in `evals/dataset*`, `evals/run_eval.py` gate and report with scanner column, sample-outcome table test. User records, then full verify and report for `evidence/verify.md`.
 
 ## Done
-- Spike (item 1): done, result under Decisions.
-- Step 1 validation (`vetting/validation.py`, `validate()` raises Refusal), red/green each: `validation.version_not_pinned`, `validation.schema`, `validation.source_not_allowed`, `validation.no_tools`. Tests: `tests/unit/test_validation.py`.
-- Step 2 rule (`vetting/rules.py`, `hidden_characters()` -> `rule.hidden_characters` findings). Tests: `tests/unit/test_rules.py`.
+- Item 1 spike (result under Decisions). Item 2: step 1 `vetting/validation.py` `validate()` raises Refusal: `validation.version_not_pinned`, `.schema`, `.source_not_allowed`, `.no_tools` (`tests/unit/test_validation.py`); step 2 `vetting/rules.py` `hidden_characters()` -> `rule.hidden_characters` (`tests/unit/test_rules.py`).
 - Fingerprint under reordering: already covered by `tests/shared/test_fingerprint.py` (caae224); not duplicated.
 
 ## Checks
@@ -31,10 +29,8 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 Plan items 3 (decision order), 4 (prompt, replay, live, recorder), 5 (evals and gate), then the scanner adapter and config change.
 
 ## Decisions and corrections
-- User approved the five-line plan.
-- Spike (14:36): scanner fits. Parseable, benign clean, poisoned-notes/search_notes 2 HIGH, <1 ms/scan, 2.5 s import. Import loads litellm, which fetches a remote cost map: 8 connect attempts; `LITELLM_LOCAL_MODEL_COST_MAP=True` stops them.
-- User: set that var in `config.py` with `os.environ.setdefault`, own commit, with a test that importing the adapter makes no connection. Approved change to the frozen module, this branch only.
-- User: leave `pyproject.toml`; the lead pins ==4.8.7 at integration.
+- User approved the five-line plan. Spike (14:36): scanner fits. Parseable, benign clean, poisoned-notes/search_notes 2 HIGH, <1 ms/scan, 2.5 s import. Import loads litellm, which fetches a remote cost map: 8 connect attempts; `LITELLM_LOCAL_MODEL_COST_MAP=True` stops them.
+- User: set that var in `config.py` with `os.environ.setdefault`, own commit, with a test that importing the adapter makes no connection. Approved change to the frozen module, this branch only. Leave `pyproject.toml`; the lead pins ==4.8.7 at integration.
 - Own call, to confirm: allowed sources are a constant in `validation.py` (npm registry.npmjs.org, PyPI pypi.org, by name); no package -> refused. Version check runs before schema so invalid-unpinned gets `version_not_pinned`.
 - User: scanner adapter and the config change come LAST, after the eval gate. Until then use a no-findings scanner on the seam. Adapter is first to cut.
 
