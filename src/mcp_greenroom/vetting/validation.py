@@ -80,6 +80,14 @@ def _check_schema(server: dict[str, Any]) -> None:
     )
 
 
+# Package-name grammar per registry: a bare name, never a specifier that can point
+# elsewhere (git, file, tarball URL, version or extras).
+_NAME_GRAMMAR = {
+    "npm": re.compile(r"(?:@[a-z0-9~-][a-z0-9._~-]*/)?[a-z0-9~-][a-z0-9._~-]{0,213}"),
+    "pypi": re.compile(r"[A-Za-z0-9](?:[A-Za-z0-9._-]{0,198}[A-Za-z0-9])?"),
+}
+
+
 def _source_allowed(package: dict[str, Any]) -> bool:
     allowed = ALLOWED_SOURCES.get(package.get("registryType", ""))
     base = package.get("registryBaseUrl", allowed)
@@ -89,7 +97,7 @@ def _source_allowed(package: dict[str, Any]) -> bool:
         and isinstance(base, str)
         and base.rstrip("/") == allowed
         and isinstance(identifier, str)
-        and "://" not in identifier
+        and _NAME_GRAMMAR[package["registryType"]].fullmatch(identifier) is not None
     )
 
 
