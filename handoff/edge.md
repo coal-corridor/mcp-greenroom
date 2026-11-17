@@ -1,36 +1,42 @@
 # Handoff: edge on area/edge
 
-State at commit 2ca2349 (2026-11-17). Uncommitted files: none.
+State at commit 60e0a8b (2026-11-17). Uncommitted files: none (this note aside).
 
 ## Goal
 Drive every step of the demo from the `mcp-greenroom` CLI over HTTP, plus a client simulator of Amp's documented registry check (briefs/area-edge.md).
 
 ## Plan
-1. Setup: `uv sync`, `./scripts/verify.sh quick`, this note.
-2. Client simulator `src/mcp_greenroom/client_sim.py`, labelled a simulation: reads a config in `sample-data/client-configs/` (Amp `amp.mcpServers` shape; npx -> npm, uvx -> pypi, docker -> oci), pages `GET /v0.1/servers` (pinned OpenAPI) through an injected httpx client, matches (registryType, identifier). Tests: listed allowed, unlisted blocked, unreachable or malformed blocks all.
-3. CLI skeleton `src/mcp_greenroom/cli.py`: bare command prints name, tagline, commands; `--api`/`--token` from `load_settings`; `client-check CONFIG` exits 0 / 20 / 1. CliRunner + httpx.MockTransport.
-4. Exit codes and status words as pure functions: approved 0, review 10, rejected 20; 401/5xx/unreachable 1; 403/409/422 20. `✓ approved`, `! needs review`, `✗ rejected`; no colour when piped or NO_COLOR.
-5. Inert printing helper (escape markup, show Cc/Cf/separators as \uXXXX), red test with markup, ANSI and zero-width text. Then ask the user for route shapes before submit/status/review/audit/list/health.
-Tests live in `tests/e2e/` (the only test folder the brief grants).
+As approved: setup; client simulator; CLI skeleton with client-check; exit codes and status words; inert printing; then the other commands from area/registry's routes (user: read them from that branch, do not ask).
 
 ## Done
-- `uv sync` done; `./scripts/verify.sh quick` passes (lint, types).
+- Client check: tests/e2e/test_client_sim.py (listed allowed, unlisted blocked, unreachable and unusable reply block all, paging).
+- CLI, all seven commands: tests/e2e/test_cli.py, test_cli_submit.py, test_cli_commands.py. Exit codes per outcome and per error, `--json` equals the API body, no colour when piped or NO_COLOR, inert findings/names/errors, --help with one example, no trace without --debug.
+- End to end: tests/e2e/test_e2e.py, skipped on this branch (no API); 149 passed on a scratch merge with area/registry at 600b2f8.
+- scripts/demo.sh (`--fake` uses tests/e2e/fake_service.py): main path and the five safe failures, all 15 steps at the expected exit code on the scratch merge.
+- Dockerfile, docker-compose.yml, deploy/README.md: image built and ran on the scratch merge; `health` showed live, ready, normal.
 
 ## Checks
-  stage  result time
   lint   pass   0.1s
-  types  pass   0.1s
-  test   pass   1.2s
+  types  pass   0.2s
+  test   pass   0.9s   (98 passed, 1 skipped)
   eval   skip   0.0s
 
 ## Open
-Plan items 2 to 5, in order. Then route shapes, demo.sh, e2e test, container files.
+1. At integration: drop `--fake` once vetting wires get_pipeline; save demo output in evidence/verify.md.
+2. The image copies evals/recordings: builds only once vetting commits it.
+3. No .dockerignore (not in edge's folders): the build context includes .venv. Slow, not wrong.
+4. Spinner not built (cut-first item).
 
 ## Decisions and corrections
-- The user approved the five-line plan. No Greenroom route shape is assumed without asking.
+- User: continue without check-ins; read registry routes from area/registry.
+- User: edge also owns src/mcp_greenroom/cli_output.py (350-line limit); recorded in the brief.
+- client-check exits 20 whenever a server is blocked, including registry unreachable (spec's client-check rule).
+- `list --json` prints one ServerList with every page's servers; `review` exits 0 when recorded, approve or decline.
+- Error body read flat (rule_id, message, received), as area/registry's errors.py sends it.
+- Slip: red commit 4dace08 typed `fix(edge)`, not `test(edge)`. 3c735e5 went in with a lint failure hidden by a pipe, fixed in f6e0bd5.
 
 ## Question at the impasse
 none
 
 ## Next step
-Red test: listed server is allowed, in `tests/e2e/test_client_sim.py`.
+Ask the user whether to open the edge pull request (`open-area-pr` skill).
