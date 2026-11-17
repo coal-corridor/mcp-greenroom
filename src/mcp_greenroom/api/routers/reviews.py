@@ -8,7 +8,12 @@ from pydantic import BaseModel, ConfigDict
 
 from mcp_greenroom.api.dependencies import get_identity, get_store
 from mcp_greenroom.api.errors import ApiError
-from mcp_greenroom.api.routers.submissions import SubmissionResult, get_submission, result_of
+from mcp_greenroom.api.routers.submissions import (
+    SubmissionResult,
+    get_submission,
+    log_decision,
+    result_of,
+)
 from mcp_greenroom.models import AuditAction, AuditEvent, Decision, Identity, Outcome, Reason, Role
 from mcp_greenroom.store import NotPending, SqlStore
 
@@ -89,4 +94,5 @@ def review(
             f"Review refused: this submission is {policy.outcome.value}, not in human review. "
             "A decided version is final: submit a new version instead.",
         ) from None
+    log_decision(stored.id, decision)
     return result_of(get_submission(store, stored.id))

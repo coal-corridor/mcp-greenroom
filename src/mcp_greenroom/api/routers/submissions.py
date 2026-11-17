@@ -12,6 +12,7 @@ from mcp_greenroom.api.errors import ApiError
 from mcp_greenroom.config import Settings
 from mcp_greenroom.fingerprint import fingerprint
 from mcp_greenroom.interfaces import Pipeline, Refusal
+from mcp_greenroom.logging import log_event
 from mcp_greenroom.models import (
     AuditAction,
     AuditEvent,
@@ -32,6 +33,19 @@ class SubmissionResult(Decision):
     name: str | None
     version: str | None
     submitted_by: str
+
+
+def log_decision(submission_id: str, decision: Decision) -> None:
+    """One structured line per decision. Reason codes only: messages may quote tool text."""
+    log_event(
+        "decision",
+        submission_id=submission_id,
+        outcome=decision.outcome.value,
+        tier=decision.tier.value if decision.tier else None,
+        decided_by=decision.decided_by,
+        policy_version=decision.policy_version,
+        reason_codes=[reason.code for reason in decision.reasons],
+    )
 
 
 def _parse(payload: dict[str, Any]) -> Submission:
@@ -66,6 +80,7 @@ def _refuse(store: SqlStore, identity: Identity, settings: Settings, refusal: Re
             policy_version=settings.policy_version,
         )
     )
+    log_event("refusal", submission_id=submission_id, rule_id=refusal.rule_id)
     return ApiError(
         status.HTTP_422_UNPROCESSABLE_CONTENT,
         refusal.rule_id,
@@ -145,6 +160,7 @@ def submit(
         if (existing := _existing(store, submission, response)) is not None:
             return existing
         raise
+    log_decision(submission_id, decision)
     return SubmissionResult(
         **decision.model_dump(),
         submission_id=submission_id,
