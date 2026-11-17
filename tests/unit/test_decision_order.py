@@ -21,7 +21,7 @@ from mcp_greenroom.models import (
 )
 from mcp_greenroom.vetting.pipeline import Policy, VettingPipeline
 from tests.fakes import FakeProvider, FakeScanner
-from tests.unit.helpers import with_server, with_tools
+from tests.unit.helpers import load_sample, with_server, with_tools
 
 POLICY = Policy(reject_threshold=0.80, approve_threshold=0.20, policy_version="test-policy")
 LOW_SCORE = 0.05
@@ -90,3 +90,23 @@ def test_step_2_hidden_characters_reject_even_when_the_classifier_is_down() -> N
     assert [f.rule_id for f in decision.findings] == ["rule.hidden_characters"]
     assert decision.decided_by == "policy"
     assert decision.policy_version == "test-policy"
+
+
+# Step 3. Classifier unavailable, or no recording for a tool: human review.
+
+
+def test_step_3_an_unavailable_classifier_sends_to_human_review() -> None:
+    decision = pipeline(unavailable=True).vet(load_sample("payments-readonly"))
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert set(codes(decision)) == {"classifier.unavailable"}
+    assert decision.tier is None
+
+
+def test_step_3_a_missing_recording_wins_over_a_reject_score_on_another_tool() -> None:
+    submission = load_sample("payments-readonly")
+    results = {"get_balance": risk("get_balance", 0.99, Capability.CREDENTIAL_ACCESS)}
+    decision = pipeline(results).vet(submission)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert codes(decision) == ["classifier.no_recording"]
+    assert decision.reasons[0].tool_name == "list_payments"
+    assert decision.risks == (results["get_balance"],)
