@@ -1,6 +1,6 @@
 # Handoff: vetting on area/vetting
 
-State at commit bdb6f26 (2026-11-17). Uncommitted files: none.
+State at commit ae84c4c (2026-11-17). Uncommitted files: none.
 
 ## Goal
 Given a submission, the pipeline returns the outcome the decision order demands, with evidence, for every sample and every evaluation case.
@@ -13,28 +13,28 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 5. About 40 labelled cases in `evals/dataset*`, `evals/run_eval.py` gate and report with scanner column, sample-outcome table test. User records, then full verify and report for `evidence/verify.md`.
 
 ## Done
-- Item 1 spike (result under Decisions). Item 2: step 1 `vetting/validation.py` `validate()` raises Refusal: `validation.version_not_pinned`, `.schema`, `.source_not_allowed`, `.no_tools` (`tests/unit/test_validation.py`); step 2 `vetting/rules.py` `hidden_characters()` -> `rule.hidden_characters` (`tests/unit/test_rules.py`). Fingerprint under reordering: already covered by `tests/shared/test_fingerprint.py` (caae224); not duplicated.
+- Items 1-2: spike; step 1 `vetting/validation.py` (`validation.version_not_pinned`, `.schema`, `.source_not_allowed`, `.no_tools`); step 2 `vetting/rules.py` (`rule.hidden_characters`). Fingerprint reorder test already in `tests/shared/test_fingerprint.py`.
+- Item 3: `vetting/pipeline.py` steps 1-8 (`tests/unit/test_decision_order.py`), invariants (`test_invariants.py`), tiers `risk/tiers.py`, `vetting/factory.py` + Abstain on the real sample (`test_factory.py`).
+- Item 4: prompt `risk/prompts/classifier-v1.md` + key (`test_prompt.py`), parser, replay, live over httpx (`test_parse/replay/live.py`), recorder `evals/record.py` (`test_record.py`). Scanner: `scanner/null.py` stand-in. Item 5: `evals/dataset.jsonl` (41: 18 benign, 16 malicious, 7 ambiguous), `evals/gate.py`, `evals/run_eval.py` with the sample table.
 
 ## Checks
 ```
-  stage  result time
   lint   pass   0.1s
   types  pass   0.3s
-  test   pass   0.9s
-  eval   skip   0.0s
+  test   pass   1.1s   (243 passed)
+  eval   FAIL   0.5s   (expected: no recordings yet, 37/41 in review)
 ```
 
 ## Open
-Plan items 3 (decision order), 4 (prompt, replay, live, recorder), 5 (evals and gate), then the scanner adapter and config change.
+(1) User runs /record-classifier (47 tools), then `./scripts/verify.sh eval`; stop and ask if a sample misses or the gate fails. (2) Sample-table pytest on real recordings; save the eval report for `evidence/verify.md`. (3) Scanner adapter (YARA static) + `config.py` setdefault commit with the no-connection import test.
 
 ## Decisions and corrections
-- User approved the five-line plan. Spike (14:36): scanner fits. Parseable, benign clean, poisoned-notes/search_notes 2 HIGH, <1 ms/scan, 2.5 s import. Import loads litellm, which fetches a remote cost map: 8 connect attempts; `LITELLM_LOCAL_MODEL_COST_MAP=True` stops them.
+- Own calls: tier spans all tools of a server (union); offending text = the tool description; key also covers prompt hash; refusal -> review, no fallback model. User approved the five-line plan. Spike (14:36): scanner fits. Parseable, benign clean, poisoned-notes/search_notes 2 HIGH, <1 ms/scan, 2.5 s import. Import loads litellm, which fetches a remote cost map: 8 connect attempts; `LITELLM_LOCAL_MODEL_COST_MAP=True` stops them.
 - User: set that var in `config.py` with `os.environ.setdefault`, own commit, with a test that importing the adapter makes no connection. Approved change to the frozen module, this branch only. Leave `pyproject.toml`; the lead pins ==4.8.7 at integration.
-- User: strict allowed sources kept as `ALLOWED_SOURCES` in `vetting/policy.py`, pinned to policy version 2026-11-17.1; config.py unchanged. For the lead: roadmap "allowed sources as a setting".
-- User: scanner adapter and the config change come LAST, after the eval gate. Until then use a no-findings scanner on the seam. Adapter is first to cut.
+- User: strict allowed sources kept as `ALLOWED_SOURCES` in `vetting/policy.py`, pinned to policy version 2026-11-17.1; config.py unchanged. For the lead: roadmap "allowed sources as a setting". User: scanner adapter and the config change come LAST, after the eval gate. Until then use a no-findings scanner on the seam. Adapter is first to cut.
 
 ## Question at the impasse
-none
+none (waiting on the user's recording run)
 
 ## Next step
-Decision order step by step, red/green, in `tests/unit/test_decision_order.py` and `vetting/pipeline.py`.
+Wait for the recordings, then `./scripts/verify.sh eval`.
