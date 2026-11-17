@@ -114,3 +114,11 @@ def test_error_from_the_api_is_printed_inert(monkeypatch: pytest.MonkeyPatch) ->
     assert "bad\\x1b]0;t\\x07" in result.stderr
     assert "l\\u202eatest" in result.stderr
     assert "\x1b]" not in result.stderr and "‮" not in result.stderr
+
+
+@pytest.mark.parametrize("command", COMMANDS)
+def test_every_command_has_help_with_one_example(command: str) -> None:
+    result = runner.invoke(app, [command, "--help"])
+
+    assert result.exit_code == 0, result.output
+    assert result.stdout.count("Example: mcp-greenroom") == 1
