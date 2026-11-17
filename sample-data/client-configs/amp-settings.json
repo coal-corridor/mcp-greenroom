@@ -1,0 +1,12 @@
+{
+  "amp.mcpServers": {
+    "payments": {
+      "command": "npx",
+      "args": ["-y", "@examplebank/payments-readonly-mcp@1.2.0"]
+    },
+    "notes": {
+      "command": "npx",
+      "args": ["-y", "@examplebank/poisoned-notes-mcp@0.3.1"]
+    }
+  }
+}

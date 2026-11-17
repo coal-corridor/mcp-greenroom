@@ -8,7 +8,7 @@ A person clones the repo, runs one command to check it and one to see the whole 
 
 ## Owns
 
-`src/mcp_greenroom/cli.py`, `src/mcp_greenroom/client_sim.py`, `scripts/demo.sh`, `tests/e2e/`, `sample-data/client-configs/`, `Dockerfile`, `docker-compose.yml`, `deploy/README.md`. Nothing else. `scripts/verify.sh` and the workflow change only with the user's agreement.
+`src/mcp_greenroom/cli.py`, `src/mcp_greenroom/cli_output.py` (added 2026-11-17 with the user's agreement, for the 350-line limit), `src/mcp_greenroom/client_sim.py`, `scripts/demo.sh`, `tests/e2e/`, `sample-data/client-configs/`, `Dockerfile`, `docker-compose.yml`, `deploy/README.md`. Nothing else. `scripts/verify.sh` and the workflow change only with the user's agreement.
 
 ## Read first
 
