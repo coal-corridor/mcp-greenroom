@@ -24,15 +24,13 @@ As approved: setup; client simulator; CLI skeleton with client-check; exit codes
 ## Open
 1. At integration: drop `--fake` once vetting wires get_pipeline; save demo output in evidence/verify.md.
 2. The image copies evals/recordings: builds only once vetting commits it.
-3. No .dockerignore (not in edge's folders): the build context includes .venv. Slow, not wrong.
-4. Spinner not built (cut-first item).
+3. No .dockerignore (outside edge's folders): build context includes .venv. Spinner not built (cut first).
 
 ## Decisions and corrections
 - User: continue without check-ins; read registry routes from area/registry.
 - User: edge also owns src/mcp_greenroom/cli_output.py (350-line limit); recorded in the brief.
 - client-check exits 20 whenever a server is blocked, including registry unreachable (spec's client-check rule).
-- `list --json` prints one ServerList with every page's servers; `review` exits 0 when recorded, approve or decline.
-- Error body read flat (rule_id, message, received), as area/registry's errors.py sends it.
+- `list --json` is one ServerList of every page; `review` exits 0 when recorded; error body read flat, as registry sends it.
 - Slip: red commit 4dace08 typed `fix(edge)`, not `test(edge)`. 3c735e5 went in with a lint failure hidden by a pipe, fixed in f6e0bd5.
 
 ## Question at the impasse
