@@ -153,3 +153,27 @@ def test_untrusted_text_is_printed_inert(monkeypatch: pytest.MonkeyPatch) -> Non
     ]:
         assert raw not in out
         assert shown in out
+
+
+def test_json_on_a_422_prints_the_error_body(monkeypatch: pytest.MonkeyPatch) -> None:
+    body = _refusal("validation.version_not_pinned", "Not pinned.", received="latest")
+    monkeypatch.setattr(cli, "TRANSPORT", api_answering(422, body))
+
+    result = submit("invalid-unpinned", "--json")
+
+    assert result.exit_code == 20
+    assert json.loads(result.stdout) == body
+    assert "validation.version_not_pinned" in result.stderr
+
+
+def test_json_prints_nothing_when_the_answer_is_not_json(monkeypatch: pytest.MonkeyPatch) -> None:
+    def proxy_error(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(502, text="<html>Bad Gateway</html>")
+
+    monkeypatch.setattr(cli, "TRANSPORT", httpx.MockTransport(proxy_error))
+
+    result = submit("payments-readonly", "--json")
+
+    assert result.exit_code == 1
+    assert result.stdout == ""
+    assert "HTTP 502" in result.stderr
