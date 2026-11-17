@@ -220,3 +220,30 @@ def test_health_exits_1_and_says_why_when_not_ready(monkeypatch: pytest.MonkeyPa
     assert result.exit_code == 1
     assert "store unavailable: disk" in result.stdout
     assert "degraded" in result.stdout
+
+
+def test_header_ids_and_arguments_are_printed_inert(monkeypatch: pytest.MonkeyPatch) -> None:
+    hostile = "x\x1b[2Jy"
+    escaped = "x\\x1b[2Jy"
+
+    def route(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/v0.1/servers":
+            headers = {"X-Greenroom-Degraded": "true", "X-Greenroom-Generated-At": hostile}
+            return httpx.Response(200, json={"servers": []}, headers=headers)
+        if request.url.path.endswith("/audit"):
+            return httpx.Response(200, json={"submission_id": hostile, "events": []})
+        return httpx.Response(
+            200, json={**result_body("payments-readonly"), "submission_id": hostile}
+        )
+
+    monkeypatch.setattr(cli, "TRANSPORT", api(route))
+
+    outputs = [
+        runner.invoke(app, ["list", *API]).stdout,
+        runner.invoke(app, ["status", "sub-1", *API]).stdout,
+        runner.invoke(app, ["audit", hostile, *API]).stdout,
+    ]
+
+    for out in outputs:
+        assert escaped in out, out
+        assert "\x1b[2J" not in out
