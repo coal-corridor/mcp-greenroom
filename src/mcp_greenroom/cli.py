@@ -16,6 +16,7 @@ from mcp_greenroom.cli_output import (
     EXIT_OK,
     EXIT_REJECTED,
     NAME,
+    GuardedGroup,
     error_body,
     exit_code,
     fail,
@@ -48,7 +49,13 @@ MAX_PAGES = 1000
 DEGRADED_HEADER = "X-Greenroom-Degraded"  # set by GET /v0.1/servers when serving last-good
 GENERATED_AT_HEADER = "X-Greenroom-Generated-At"
 
-app = typer.Typer(add_completion=False, no_args_is_help=False)
+
+app = typer.Typer(
+    cls=GuardedGroup,
+    add_completion=False,
+    no_args_is_help=False,
+    pretty_exceptions_show_locals=False,  # locals can hold the token
+)
 
 ApiOption = Annotated[
     str | None, typer.Option("--api", help="API address. Default: MCP_GREENROOM_API.")
@@ -77,7 +84,10 @@ def _client(api: str | None, token: str | None) -> httpx.Client:
 
 
 @app.callback(invoke_without_command=True)
-def main(ctx: typer.Context) -> None:
+def main(
+    ctx: typer.Context,
+    debug: Annotated[bool, typer.Option("--debug", help="Show stack traces.")] = False,
+) -> None:
     """Vetted intake for MCP servers.
 
     Example: mcp-greenroom submit sample-data/servers/payments-readonly.json

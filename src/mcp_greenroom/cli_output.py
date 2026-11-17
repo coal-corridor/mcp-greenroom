@@ -12,6 +12,8 @@ from rich import box
 from rich.console import Console
 from rich.table import Table
 from rich.text import Text
+from typer.core import TyperGroup
+from typer.exceptions import TyperException
 
 NAME = "mcp-greenroom"
 
@@ -140,3 +142,21 @@ def fail_from(response: httpx.Response) -> NoReturn:
         }[status]
         fail(what, received or f"refused by the API ({status})", todo, EXIT_REJECTED)
     fail(what, received or f"HTTP {status} from the API", "Check the API log, then try again.")
+
+
+class GuardedGroup(TyperGroup):
+    """Turns an unexpected exception into a three-part error, unless --debug was given."""
+
+    def invoke(self, ctx: Any) -> Any:  # Typer keeps its Context type private
+        try:
+            return super().invoke(ctx)
+        except (typer.Exit, typer.Abort, TyperException):
+            raise
+        except Exception as exc:
+            if ctx.params.get("debug"):
+                raise
+            fail(
+                "mcp-greenroom stopped on an unexpected error.",
+                type(exc).__name__,
+                "Run the same command with --debug before it to see the stack trace.",
+            )
