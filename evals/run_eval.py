@@ -12,7 +12,7 @@ from pathlib import Path
 
 from evals.cases import UNRECORDED, case_submission, load_dataset, load_sample
 from evals.gate import MAX_REVIEW_SHARE, WARN_REVIEW_SHARE, CaseResult, judge, label_table
-from mcp_greenroom.config import load_settings
+from mcp_greenroom.config import Settings, load_settings
 from mcp_greenroom.interfaces import Refusal
 from mcp_greenroom.models import Decision, FindingSource, Outcome, Tier
 from mcp_greenroom.vetting.factory import build_pipeline
@@ -135,12 +135,16 @@ def report(results: list[CaseResult], sample_rows: list[list[str]], policy: str)
     ]
 
 
+def eval_settings() -> Settings:
+    return load_settings()
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Run the classifier evaluation and its gate.")
     parser.add_argument("--out", type=Path, help="also write the report as Markdown here")
     args = parser.parse_args(argv)
 
-    settings = load_settings()
+    settings = eval_settings()
     pipeline = build_pipeline(settings)
     results = run_cases(pipeline)
     sample_rows, sample_failures = run_samples(pipeline)
