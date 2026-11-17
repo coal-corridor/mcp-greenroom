@@ -19,6 +19,18 @@ API_VERSION = "2026-10-21"
 MAX_TOKENS = 4096
 
 
+class LiveCallFailed(ClassifierUnavailable):
+    """The call itself failed. status is the HTTP status, or None for a transport error."""
+
+    def __init__(self, message: str, status: int | None = None) -> None:
+        super().__init__(message)
+        self.status = status
+
+    @property
+    def retryable(self) -> bool:
+        return self.status is None or self.status in (408, 409, 429) or self.status >= 500
+
+
 @dataclass(frozen=True)
 class LiveAnswer:
     text: str
@@ -59,14 +71,15 @@ class LiveProvider:
             with httpx.Client(transport=self.transport, timeout=self.timeout) as client:
                 response = client.post(url, headers=headers, json=body)
         except httpx.HTTPError as exc:
-            raise ClassifierUnavailable(
+            raise LiveCallFailed(
                 f"Classifier call failed: {type(exc).__name__} calling {url}. "
                 "Check the endpoint and the network, then run the recording again."
             ) from None
         if response.status_code != 200:
-            raise ClassifierUnavailable(
+            raise LiveCallFailed(
                 f"Classifier call failed: HTTP {response.status_code} from {url}. "
-                "Check the model name, the key variable and the rate limit, then run again."
+                "Check the model name, the key variable and the rate limit, then run again.",
+                response.status_code,
             )
         try:
             data = response.json()

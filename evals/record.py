@@ -15,7 +15,7 @@ from evals.cases import UNRECORDED, load_dataset, load_sample, sample_slugs
 from mcp_greenroom.config import ENV_PREFIX, ConfigError, load_settings
 from mcp_greenroom.interfaces import ClassifierUnavailable
 from mcp_greenroom.models import Tool
-from mcp_greenroom.risk.live import LiveAnswer, LiveProvider
+from mcp_greenroom.risk.live import LiveAnswer, LiveCallFailed, LiveProvider
 from mcp_greenroom.risk.prompt import Prompt, load_prompt, recording_key
 from mcp_greenroom.risk.recording import (
     Recording,
@@ -37,6 +37,8 @@ class Summary:
     input_tokens: int = 0
     output_tokens: int = 0
     model_ids: set[str] = field(default_factory=set)
+    aborted: bool = False
+    first_error: str = ""
 
 
 def targets() -> list[Tool]:
@@ -56,8 +58,8 @@ def _ask(provider: LiveProvider, tool: Tool, sleep: Callable[[float], None]) -> 
     for attempt in range(ATTEMPTS):
         try:
             return provider.exchange(tool)
-        except ClassifierUnavailable:
-            if attempt == ATTEMPTS - 1:
+        except LiveCallFailed as exc:
+            if not exc.retryable or attempt == ATTEMPTS - 1:
                 raise
             sleep(2.0 * 2**attempt)
     raise AssertionError("unreachable")
@@ -75,7 +77,8 @@ def record_all(
     sleep: Callable[[float], None] | None = None,
 ) -> Summary:
     """Record each tool once. Keeps existing recordings unless forced. A failed call writes
-    nothing, so replay misses and the tool goes to human review."""
+    nothing, so replay misses and the tool goes to human review. When the first call fails,
+    the run stops there."""
     clock = clock or _now
     sleep = sleep or time.sleep
     summary = Summary()
@@ -85,10 +88,15 @@ def record_all(
         if recording_path(directory, key).exists() and not force:
             summary.skipped.append(label)
             continue
+        first_call = not (summary.recorded or summary.failed)
         try:
             answer = _ask(provider, tool, sleep)
-        except ClassifierUnavailable:
+        except ClassifierUnavailable as exc:
             summary.failed.append(label)
+            if first_call:  # wrong model id, key or endpoint: stop before the next call
+                summary.aborted = True
+                summary.first_error = str(exc)
+                break
             continue
         write_recording(
             directory,
@@ -143,6 +151,9 @@ def main(argv: list[str] | None = None) -> int:
     summary = record_all(
         provider, prompt, settings.recordings_dir, targets(), force=args.force, prune=args.prune
     )
+    if summary.aborted:
+        sys.stderr.write(f"Recording stopped after the first call failed. {summary.first_error}\n")
+        return 1
     print(f"prompt {prompt.version} ({prompt.hash[:19]}), model {settings.model}")
     print(f"served by: {', '.join(sorted(summary.model_ids)) or '-'}")
     print(
