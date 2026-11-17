@@ -56,3 +56,21 @@ def test_unlisted_server_is_blocked() -> None:
 
     assert verdicts["notes"].allowed is False
     assert verdicts["payments"].allowed is True
+
+
+def _failing(handler_response: httpx.Response | Exception) -> httpx.Client:
+    def handler(request: httpx.Request) -> httpx.Response:
+        if isinstance(handler_response, Exception):
+            raise handler_response
+        return handler_response
+
+    return httpx.Client(base_url="http://registry.test", transport=httpx.MockTransport(handler))
+
+
+def test_unreachable_registry_blocks_every_server() -> None:
+    registry = _failing(httpx.ConnectError("connection refused"))
+
+    verdicts = check_config(AMP_CONFIG, registry)
+
+    assert {v.server for v in verdicts} == {"payments", "notes"}
+    assert not any(v.allowed for v in verdicts)
