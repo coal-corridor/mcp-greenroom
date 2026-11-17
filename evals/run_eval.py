@@ -147,6 +147,7 @@ def eval_settings() -> Settings:
             "reject_threshold": fields["reject_threshold"].default,
             "approve_threshold": fields["approve_threshold"].default,
             "require_human_for_all": fields["require_human_for_all"].default,
+            "policy_version": fields["policy_version"].default,
         }
     )
 

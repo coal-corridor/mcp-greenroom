@@ -15,7 +15,7 @@ dependencies = [
     "httpx>=0.27",
     "jsonschema>=4.23",
     "pyyaml>=6.0",
-    "cisco-ai-mcp-scanner",
+    "cisco-ai-mcp-scanner==4.8.7",
 ]
 
 [project.scripts]

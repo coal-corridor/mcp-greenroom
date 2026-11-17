@@ -75,6 +75,17 @@ class Settings(BaseSettings):
                 f"{ENV_PREFIX}RISK_PROVIDER=live needs {ENV_PREFIX}MODEL and "
                 f"{ENV_PREFIX}MODEL_API_KEY set"
             )
+        changed = [
+            f"{ENV_PREFIX}{name.upper()}"
+            for name in ("reject_threshold", "approve_threshold", "require_human_for_all")
+            if getattr(self, name) != type(self).model_fields[name].default
+        ]
+        if changed and self.policy_version == type(self).model_fields["policy_version"].default:
+            raise ValueError(
+                f"{', '.join(changed)} changed the policy, but {ENV_PREFIX}POLICY_VERSION is "
+                f"still {self.policy_version}. Set a new {ENV_PREFIX}POLICY_VERSION, so each "
+                "decision names the policy that made it"
+            )
         return self
 
 

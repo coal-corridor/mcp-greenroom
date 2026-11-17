@@ -80,6 +80,26 @@ Built only when everything above is green. Listed in the order they are cut, fir
 | The degraded list has no expiry | Phase 2, item 13 |
 | The dependency audit reports and does not block a merge | Phase 2, item 11 |
 
+### Deferred from the area reviews
+
+One line each. The finding and the user's decision are in the review file named.
+
+- Validate snapshot records on read; a malformed record gives 500 today (registry review 6).
+- Retry `ensure_schema` after a failed start, and stop an empty database at startup from wiping the last-good copy (registry review 7, also in `operate.md`).
+- Build the app lazily instead of at import time, so tests never read a local `.env` (registry review 9).
+- Report only the `uq_decision_seq` violation as "not pending"; any other `IntegrityError` reads the same today (registry review 11).
+- Stamp each decision with the policy version plus a hash of the thresholds and require-human flag, so any policy change gives a new version; today startup only refuses a change away from the defaults under the default version (vetting review 4).
+- Refuse duplicate tool names at step 1 (`validation.duplicate_tool`); today the evidence can name the wrong tool (vetting review 11).
+- Build the install command ourselves instead of refusing a list of registry-override arguments, which cannot be complete (vetting review 3).
+- Allowed package sources as a setting; today a strict list in `vetting/policy.py` tied to policy 2026-11-17.1 (vetting handoff).
+- Version-aware client matching in the client simulator (edge review 3).
+- Parse `docker run` in client configs; Docker servers are blocked today (edge review 4).
+- Keep the degraded flag in `list --json` (edge review 6).
+- CLI errors that name the field, not the exception class (edge review 8).
+- `list` that fails visibly at the 1000-page cap instead of stopping silently (edge review 9).
+- Keep serving the last-good list when the pipeline cannot be built at startup; today startup stops with a clear message and nothing is served (integration review 3).
+- `read_submission` checks for a JSON object and returns `dict[str, Any]`, catches `RecursionError`, and has tests for the non-UTF-8 and other read-error branches (integration review 6).
+
 ## Future work
 
 ### Phase 2: pilot in one organisation

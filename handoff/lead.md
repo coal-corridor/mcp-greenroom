@@ -1,38 +1,37 @@
-# Handoff: lead on setup
+# Handoff: lead on integration
 
-State at commit f343f5d (2026-11-17). Uncommitted files: none. PR #1 (setup -> main) open.
+State at commit 284e000 (2026-11-17). Uncommitted files: none except this note. Branch not pushed.
 
 ## Goal
-Brief 00: check script, PR checks, guard rails (closed). Brief 10: shared shapes and seams written, tested, frozen; same PR.
+Brief 90: the three areas work together on main, checked by the script, an independent review and a break test.
 
 ## Plan
-Brief 00 as approved: pyproject/lock, verify.sh, network guard, structure tests, ci.yml, Makefile.
-Brief 10, one commit each: contracts/, shared modules, seams, sample-data/servers, fakes under tests/, one shape test per shared module, CLAUDE.md paths.
+As the user directed: wire the real pipeline, review-deferred items, vetting finding 4, roadmap, verify and demo, break test, then the user's review decisions in the order 1, 4, 3, scanner lock.
 
 ## Done
-- 86697af pyproject, uv.lock, .python-version, empty package.
-- 0be6efe scripts/verify.sh. 0e67edf network guard (tests/structure/test_network_guard.py). 9b3d50f + ffa1567 structure rules (tests/structure/test_source_rules.py).
-- b07f740 ci.yml, 40070b0 Makefile. CI run 44008340480 on PR #1: all five jobs green and named.
-- f343f5d contracts/: OpenAPI 2025-12-01 and server.schema.json 2025-12-11 pinned with sha256. Match the spec.
+- Real pipeline built once in create_app (50caca5, 32004b2), e2e on the real app, no fakes in demo: tests/api/test_pipeline_wiring.py, tests/e2e/test_e2e.py.
+- get_store returns SqlStore (b328724). Scanner pinned ==4.8.7 (3414367). One policy-version source confirmed (57027aa).
+- Policy change without a new version stops startup (d4516d1): tests/shared/test_config.py.
+- Break test from a fresh clone: evidence/raw/break-test.txt. Two unclear messages fixed (295941b, 94dc6a4).
+- Reviews and decisions: handoff/integration-review.md (868faee). /code-review cut for time.
+- Review fixes: env cleared for every test (tests/structure/test_env_isolation.py), main path "by policy" (fb0260c), pipeline build failure exits clearly (tests/failure/test_startup_pipeline.py), scanner lock (tests/unit/test_scanner_lock.py).
+- ROADMAP.md: deferred review items, hash-stamped version, last-good list without a pipeline, read_submission. operate.md: scanner thread safety as a known gap.
 
 ## Checks
-  lint   pass   types  pass   test   pass (17)   eval   skip   (exit 0, before f343f5d; quick green after it)
+lint pass 0.1s, types pass 0.2s, test pass 18.4s (436 passed), eval pass 6.0s (24% in review). Exit 0. Demo exit 0, 14 of 14 steps as expected. Saved in evidence/raw/.
 
 ## Open
-1. Propose model names and fields plus seams. The user decides.
-2. Brief 10 items 2 to 7. 3. "contracts frozen", green checks, user merges PR #1.
+1. The user runs /open-area-pr integration and merges.
+2. Brief 95 (evidence): README setup/run/check, verify.md from evidence/raw/, operate.md, decisions.md.
 
 ## Decisions and corrections
-- The repo is private, so required checks are off. The user merges on green by hand.
-- No baseline commit (main had 3 commits).
-- cisco-ai-mcp-scanner kept. litellm GHSA-g5ff-637f-6q2m and GHSA-7hp6-4w63-5g45 waived in [tool.uv.audit], recorded in evidence/decisions.md (user's choice).
-- Secret scan: pinned gitleaks 8.30.1 binary over full history, not the official action (that scans only the event's commits). Departs from delivery.md.
-- The user said: stop researching gitleaks, decide with what is known.
-- ruff 0.17 also formats Python code blocks in .md files, so lint covers docs.
-- Check verify.sh's own exit code before a commit (9b3d50f slipped through `| tail`).
+- The user approved the frozen config.py change (startup policy check) and accepted get_store returning SqlStore.
+- Accepted gap: the policy check compares only with the defaults (ROADMAP, hash-stamped version).
+- With MCP_GREENROOM_* set in the shell, test collection still reads it: api/main.py builds the app at import (registry review 9, ROADMAP).
+- lead/handoff carried only this note, no evidence drafts.
 
 ## Question at the impasse
-Model names and fields and the injection approach: waiting for the user.
+none
 
 ## Next step
-Write src/mcp_greenroom/models.py once the user approves the proposal.
+Wait for the user's /open-area-pr integration, then read briefs/95-evidence.md.

@@ -14,6 +14,7 @@ def test_the_eval_forces_replay_and_the_default_policy(monkeypatch: pytest.Monke
     monkeypatch.setenv("MCP_GREENROOM_REJECT_THRESHOLD", "0.99")
     monkeypatch.setenv("MCP_GREENROOM_APPROVE_THRESHOLD", "0.5")
     monkeypatch.setenv("MCP_GREENROOM_REQUIRE_HUMAN_FOR_ALL", "true")
+    monkeypatch.setenv("MCP_GREENROOM_POLICY_VERSION", "shell-policy-2")  # required with a change
     settings = eval_settings()
     defaults = Settings.model_fields
     assert settings.risk_provider == "replay"
@@ -21,3 +22,4 @@ def test_the_eval_forces_replay_and_the_default_policy(monkeypatch: pytest.Monke
     assert settings.reject_threshold == defaults["reject_threshold"].default
     assert settings.approve_threshold == defaults["approve_threshold"].default
     assert settings.require_human_for_all is False
+    assert settings.policy_version == defaults["policy_version"].default

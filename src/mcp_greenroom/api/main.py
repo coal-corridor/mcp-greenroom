@@ -10,8 +10,10 @@ from fastapi import FastAPI, Request, Response
 from mcp_greenroom.api import errors
 from mcp_greenroom.api.routers import audit, health, reviews, servers, submissions
 from mcp_greenroom.config import ConfigError, Settings, load_settings
+from mcp_greenroom.interfaces import Pipeline
 from mcp_greenroom.logging import configure_logging, log_event
 from mcp_greenroom.store import SqlStore, StoreUnavailable
+from mcp_greenroom.vetting.factory import build_pipeline
 
 
 async def _log_request(
@@ -34,10 +36,33 @@ async def _log_request(
         )
 
 
+class StartupError(Exception):
+    """The service cannot start. The message says what failed, what was received, what to do."""
+
+
+def _build_pipeline_or_fail(settings: Settings) -> Pipeline:
+    try:
+        return build_pipeline(settings)
+    except Exception as exc:
+        detail = ascii(str(exc)[:300])[1:-1]
+        log_event("startup.pipeline_failed", logging.ERROR, error=type(exc).__name__)
+        raise StartupError(
+            "Startup failed: the vetting pipeline could not be built. "
+            f"Received: {type(exc).__name__}: {detail} (risk provider {settings.risk_provider}, "
+            f"recordings {settings.recordings_dir}). Next: run 'uv sync' to install the scanner, "
+            "check MCP_GREENROOM_RECORDINGS_DIR, then start again. Nothing is served meanwhile."
+        ) from None
+
+
 def create_app(settings: Settings | None = None) -> FastAPI:
-    """Build the app from validated settings. Invalid configuration raises ConfigError."""
+    """Build the app from validated settings.
+
+    Invalid configuration raises ConfigError; a pipeline that cannot be built raises
+    StartupError. The pipeline is built once, here, and reused (the scanner takes ~2.5 s).
+    """
     settings = settings or load_settings()
     configure_logging(settings.log_level)
+    pipeline = _build_pipeline_or_fail(settings)
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -52,6 +77,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="MCP Greenroom", lifespan=lifespan)
     app.state.settings = settings
+    app.state.pipeline = pipeline
     errors.install(app)
     app.middleware("http")(errors.catch_unexpected)  # inner: errors become 500 here
     app.middleware("http")(_log_request)  # outer: sees the final status
@@ -67,7 +93,7 @@ def _app_or_exit() -> FastAPI:
     """Invalid configuration stops startup with the message alone, no stack trace."""
     try:
         return create_app()
-    except ConfigError as exc:
+    except (ConfigError, StartupError) as exc:
         raise SystemExit(str(exc)) from None
 
 
