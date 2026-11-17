@@ -58,13 +58,13 @@ I found 3 high-severity gaps, all at decision-order step 1, which a crafted subm
 | Unused `NullScanner`; `run_eval` does several jobs with a global side-effect dict | Low | `src/mcp_greenroom/scanner/null.py`; `evals/run_eval.py:31-71, 53` | Delete `null.py`; return the capabilities from `run_cases` instead of the global |
 
 Key files:
-- `/home/ilya/code/mcp-greenroom-vetting/src/mcp_greenroom/vetting/validation.py`
-- `/home/ilya/code/mcp-greenroom-vetting/src/mcp_greenroom/vetting/pipeline.py`
-- `/home/ilya/code/mcp-greenroom-vetting/src/mcp_greenroom/vetting/rules.py`
-- `/home/ilya/code/mcp-greenroom-vetting/src/mcp_greenroom/scanner/yara.py`
-- `/home/ilya/code/mcp-greenroom-vetting/src/mcp_greenroom/config.py`
-- `/home/ilya/code/mcp-greenroom-vetting/evals/run_eval.py`
-- `/home/ilya/code/mcp-greenroom-vetting/tests/unit/test_eval_dataset.py`
+- `src/mcp_greenroom/vetting/validation.py`
+- `src/mcp_greenroom/vetting/pipeline.py`
+- `src/mcp_greenroom/vetting/rules.py`
+- `src/mcp_greenroom/scanner/yara.py`
+- `src/mcp_greenroom/config.py`
+- `evals/run_eval.py`
+- `tests/unit/test_eval_dataset.py`
 
 ---
 

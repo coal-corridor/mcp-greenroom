@@ -33,80 +33,123 @@ submit -> validate -> rules -> scanner -> classifier -> decide -> (human review)
 ```
 Rules run before the classifier, and the classifier can escalate a case but never clear one. Every decision leaves an append-only audit record. By default the classifier replays recorded model responses, so the workflow and every check run from a clean checkout with no credentials and no network.
 
-## Prerequisites
+## How to run MCP Greenroom
+### Prerequisites
 
-Tested on WSL 2 with Ubuntu 24.04:
+- tested on WSL 2 with Ubuntu 24.04:
+- [uv](https://docs.astral.sh/uv/) (tested with 0.13.8). Installs Python deps from `uv.lock`.
+- Python 3.12 (tested with 3.12.3).
+- `git` and `bash`.
+- (optional) Docker with Compose, for container deployment (tested with 29.7.2).
+- not required: API keys, accounts, network access (beyond installing packages).
 
-- [uv](https://docs.astral.sh/uv/) (tested with 0.13.8). It installs every Python dependency from `uv.lock`.
-- Python 3.12, pinned in `.python-version` (tested with 3.12.3).
-- git and bash.
-- Optional: Docker with Compose, for the container (tested with 29.7.2).
-
-No API key, no account and no network access beyond installing packages.
-
-## Setup
+### Setup
 
 ```sh
 git clone https://github.com/coal-corridor/mcp-greenroom.git
 cd mcp-greenroom
 uv sync
 ```
+### Test
 
-## Run
+- `./scripts/verify.sh` - lint, type check, tests and the classifier evaluation gate, with no network and no credentials, exits non-zero if any stage fails 
+- `./scripts/verify.sh quick` - runs `lint` and `types` only
+- `./scripts/verify.sh <stage> ` - run single stage: `lint`, `types`, `test` or `eval`
+
+### Run
 
 ```sh
 make run
 ```
-
 - The API listens on `http://127.0.0.1:8000`. 
-
 - The classifier replays recorded model answers and the scanner runs offline.
 
-- Every setting has a safe default.
-
-## Docker
+### Run with Docker
 `docker compose up --build` serves the same API on `127.0.0.1:8000`.
+
+## Core path workflow step-by-step
+```yaml
+CLI reference
+---
+mcp-greenroom submit FILE: Send one server version for vetting.           
+mcp-greenroom status ID: Show a submission and its decision.            
+mcp-greenroom review ID:  Approve or decline a case in human review.     
+mcp-greenroom audit ID: List the audit records of a submission.        
+mcp-greenroom list: List the approved versions on the registry.
+mcp-greenroom client-check CONFIG: Simulate a client's registry check on a config.
+mcp-greenroom health:  Show liveness, readiness and registry mode.
+---
+```
+```yaml
+Sample data
+---
+See `sample-data/servers`
+```
+
+
+**Terminal A**
+```bash
+# Start the service on 127.0.0.1:8000, watch for logs
+make run
+```
+
+**Terminal B**
+
+```bash
+# Show command list
+uv run mcp-greenroom
+
+# Show health status
+uv run mcp-greenroom health
+
+# Submit an MCP Server for assessment
+uv run mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+
+# List MCP Servers in MCP Greenroom registry
+uv run mcp-greenroom list
+
+# Simulate an Amp check
+uv run mcp-greenroom client-check sample-data/client-configs/amp-settings.json
+
+# Submit an unpinned MCP Server for assessment
+uv run mcp-greenroom submit sample-data/servers/invalid-unpinned.json --token dev-dana
+
+# Poisoned description (guarded failure)
+uv run mcp-greenroom submit sample-data/servers/poisoned-notes.json --token dev-dana
+
+# Human review required (abstain)
+uv run mcp-greenroom submit sample-data/servers/unrecorded-reporter.json --token dev-dana
+
+# Human review required
+uv run mcp-greenroom submit sample-data/servers/ambiguous-exporter.json --token dev-riley
+
+# Approve by a valid reviewer
+uv run mcp-greenroom review f4089593-f9c3-4988-bfea-fbad57a8196b --approve --note "smoke test" --token dev-riley
+
+# Review audit records
+uv run mcp-greenroom audit f4089593-f9c3-4988-bfea-fbad57a8196b --token dev-sam
+
+# List MCP Servers
+uv run mcp-greenroom list
+
+# Resubmission
+uv run mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
+
+# Unauthenticated submission
+uv run mcp-greenroom submit sample-data/servers/payments-readonly.json
+
+# Missing file
+uv run mcp-greenroom submit no-such-file.json --token dev-dana
+
+# List MCP servers in the registry
+curl -s http://127.0.0.1:8000/v0.1/servers
+# ...prettier
+curl -s http://127.0.0.1:8000/v0.1/servers | python3 -m json.tool
+```
+
 
 ## Demo
 To see everything at once, `./scripts/demo.sh` starts its own service on port 8765, walks the main path and the five safe failures with the CLI, checks each exit code and stops the service.
-
-## Verification
-
-- `./scripts/verify.sh` - lint, type check, tests and the classifier evaluation gate, with no network and no credentials, exits non-zero if any stage fails 
-- `./scripts/verify.sh quick` - runs lint and types only
-- `lint`, `types`, `test` and `eval` run one stage
-
-## Example workflow
-
-The main path: a developer submits a benign, read-only server, it is approved by policy and listed, and a client simulator allows it while blocking an unlisted one.
-
- The input is [`sample-data/servers/payments-readonly.json`](sample-data/servers/payments-readonly.json): a `server.json` record (`com.examplebank/payments-readonly` 1.2.0, one npm package) and two tools, `get_balance` and `list_payments`.
-
-With `make run` in another terminal:
-
-```text
-$ uv run mcp-greenroom submit sample-data/servers/payments-readonly.json --token dev-dana
-
-✓ approved  com.examplebank/payments-readonly 1.2.0  tier low
-  policy.tier_low: Tier low, every risk score below 0.20, no rule or scanner match.
-Next: mcp-greenroom status 2c5c37e7-d77a-45a8-8841-c8b779cb95ae
-(exit 0)
-
-$ uv run mcp-greenroom list
-
-  com.examplebank/payments-readonly 1.2.0
-1 approved version(s).
-Next: mcp-greenroom client-check CONFIG, to see what a client would allow
-(exit 0)
-
-$ uv run mcp-greenroom client-check sample-data/client-configs/amp-settings.json
-
-Simulation of Amp's documented registry check, not Amp itself.
-✓ allowed  payments  npm package @examplebank/payments-readonly-mcp is listed
-✗ blocked  notes  package is not on the registry list
-Next: submit the blocked server with mcp-greenroom submit FILE, or remove it from the config
-(exit 20)
-```
 
 - `dev-dana`, `dev-riley` and `dev-sam` are stub tokens that work only in the dev environment; *riley* and *sam* are reviewers. 
 - Exit codes: 0 done or approved, 1 operational failure, 2 usage error, 10 in human review, 20 rejected, refused or blocked. 

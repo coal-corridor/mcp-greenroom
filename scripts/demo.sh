@@ -36,11 +36,24 @@ cleanup() {
 }
 trap cleanup EXIT
 
+
+# shown ARGS...: the command as a person would type it, with quotes around any argument that has a space.
+shown() {
+  local out="" arg
+  for arg in "$@"; do
+    if [[ "$arg" == *[[:space:]]* ]]; then
+      out+=" \"$arg\""
+    else
+      out+=" $arg"
+    fi
+  done
+  printf '%s' "${out# }"
+}
 # step TITLE EXPECTED_EXIT COMMAND...: run one step, print its output, check its exit code.
 step() {
   local title="$1" expected="$2"
   shift 2
-  printf '\n== %s (expect exit %s)\n$ %s\n' "$title" "$expected" "$*"
+  printf '\n== %s (expect exit %s)\n$ %s\n' "$title" "$expected" "$(shown "$@")"
   "$@"
   local code=$?
   if [[ "$code" -eq "$expected" ]]; then
