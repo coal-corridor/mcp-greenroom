@@ -4,11 +4,13 @@ When the store fails, the last-good copy is served with a degraded marker in the
 so the body stays upstream format. With no last-good copy the list is refused with 503.
 """
 
+import logging
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 
 from mcp_greenroom.api.dependencies import get_settings, get_store
+from mcp_greenroom.api.errors import ApiError
 from mcp_greenroom.api.paging import DEFAULT_LIMIT, MAX_LIMIT, decode_cursor, page
 from mcp_greenroom.config import Settings
 from mcp_greenroom.logging import log_event
@@ -44,7 +46,13 @@ def list_servers(
         try:
             records, generated_at = read_snapshot(settings.snapshot_path)
         except SnapshotMissing:
-            raise exc from None
+            log_event("store.unavailable", logging.ERROR, error=str(exc), snapshot="missing")
+            raise ApiError(
+                status.HTTP_503_SERVICE_UNAVAILABLE,
+                "store.unavailable",
+                "List failed: the registry store is unavailable and there is no last-good copy "
+                "yet to serve. Try again once GET /readyz reports ready.",
+            ) from None
         log_event("list.degraded", generated_at=generated_at, error=str(exc))
         response.headers[DEGRADED_HEADER] = "true"
         response.headers[GENERATED_AT_HEADER] = generated_at
