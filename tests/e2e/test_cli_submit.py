@@ -177,3 +177,21 @@ def test_json_prints_nothing_when_the_answer_is_not_json(monkeypatch: pytest.Mon
     assert result.exit_code == 1
     assert result.stdout == ""
     assert "HTTP 502" in result.stderr
+
+
+def test_a_missing_submission_file_says_so_and_what_to_do(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["submit", str(tmp_path / "nope.json"), "--token", "dev-dana"])
+    assert result.exit_code == 1
+    assert "not found" in result.output
+    assert "Check the path" in result.output
+    assert "FileNotFoundError" not in result.output
+
+
+def test_a_broken_json_file_names_the_line_and_column(tmp_path: Path) -> None:
+    broken = tmp_path / "broken.json"
+    broken.write_text('{"server": {"name": "com.examplebank/x", \n', encoding="utf-8")
+    result = runner.invoke(app, ["submit", str(broken), "--token", "dev-dana"])
+    assert result.exit_code == 1
+    assert "not valid JSON" in result.output
+    assert "line 2, column 1" in result.output
+    assert "JSONDecodeError" not in result.output
