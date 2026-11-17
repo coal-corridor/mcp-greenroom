@@ -75,7 +75,7 @@ def _check_schema(server: dict[str, Any]) -> None:
     error = best_match(_schema_validator().iter_errors(server))
     if error is None:
         return
-    where = "/" + "/".join(str(part) for part in error.absolute_path)
+    where = "/" + "/".join(escaped(part)[1:-1] for part in error.absolute_path)
     raise _refuse(
         "validation.schema",
         f"Server manifest does not fit the schema at {where}: the '{error.validator}' rule failed",
