@@ -5,7 +5,11 @@ from typing import Any
 import pytest
 from fastapi.testclient import TestClient
 
+from mcp_greenroom.api.dependencies import get_pipeline
+from mcp_greenroom.interfaces import Refusal
+from mcp_greenroom.models import Decision, Submission
 from tests.api.conftest import DANA, sample
+from tests.fakes import FakePipeline
 
 
 def _assert_clean_error(text: str) -> None:
@@ -25,14 +29,34 @@ def test_unpinned_version_is_refused_with_a_rule_id(client: TestClient) -> None:
     assert client.get("/v0.1/servers").json()["servers"] == []
 
 
+class RefuseOncePipeline:
+    """Refuses its first submission (a pinned version), then answers like the fake."""
+
+    def __init__(self) -> None:
+        self.fake = FakePipeline()
+        self.refused = False
+
+    def vet(self, submission: Submission) -> Decision:
+        if not self.refused:
+            self.refused = True
+            raise Refusal("fake.no_tools", "Submission has no tools.", "[]")
+        return self.fake.vet(submission)
+
+
 def test_a_refusal_stores_no_decision(client: TestClient) -> None:
-    refused = sample("invalid-unpinned")
-    assert client.post("/submissions", json=refused, headers=DANA).status_code == 422
+    pipeline = RefuseOncePipeline()
+    client.app.dependency_overrides[get_pipeline] = lambda: pipeline  # type: ignore[attr-defined]
+    body = sample("payments-readonly")  # pinned: 1.2.0
 
-    fixed = {**refused, "server": {**refused["server"], "version": "1.0.0"}}
-    response = client.post("/submissions", json=fixed, headers=DANA)
+    refused = client.post("/submissions", json=body, headers=DANA)
+    assert refused.status_code == 422, refused.text
+    refusal_id = refused.json()["submission_id"]
 
-    assert response.status_code == 201, response.text
+    assert client.get(f"/submissions/{refusal_id}", headers=DANA).status_code == 404
+    # the same name and version again: a stored decision would make this a 200 or a 409
+    again = client.post("/submissions", json=body, headers=DANA)
+    assert again.status_code == 201, again.text
+    assert again.json()["submission_id"] != refusal_id
 
 
 @pytest.mark.parametrize(
