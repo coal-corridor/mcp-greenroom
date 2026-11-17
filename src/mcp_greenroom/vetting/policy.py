@@ -18,3 +18,18 @@ ALLOWED_SOURCES: MappingProxyType[str, str] = MappingProxyType(
         "pypi": "https://pypi.org",
     }
 )
+
+# Arguments and environment variables that point an installer at another registry. A list
+# cannot be complete (roadmap: build the install command ourselves, ignore submitted ones).
+REGISTRY_OVERRIDE_FLAGS = frozenset(
+    {"--registry", "--index-url", "-i", "--extra-index-url", "--find-links", "-f", "--index"}
+)
+REGISTRY_OVERRIDE_VARIABLES = frozenset(
+    {
+        "NPM_CONFIG_REGISTRY",
+        "PIP_INDEX_URL",
+        "PIP_EXTRA_INDEX_URL",
+        "PIP_FIND_LINKS",
+        "UV_INDEX_URL",
+    }
+)

@@ -15,7 +15,11 @@ from jsonschema.exceptions import best_match
 
 from mcp_greenroom.interfaces import Refusal
 from mcp_greenroom.models import Submission, Tool
-from mcp_greenroom.vetting.policy import ALLOWED_SOURCES
+from mcp_greenroom.vetting.policy import (
+    ALLOWED_SOURCES,
+    REGISTRY_OVERRIDE_FLAGS,
+    REGISTRY_OVERRIDE_VARIABLES,
+)
 
 MAX_RECEIVED = 80
 SCHEMA_PATH = Path(__file__).resolve().parents[3] / "contracts" / "server.schema.json"
@@ -88,6 +92,22 @@ _NAME_GRAMMAR = {
 }
 
 
+def _overrides_registry(package: dict[str, Any]) -> bool:
+    for field in ("runtimeArguments", "packageArguments"):
+        for argument in package.get(field) or []:
+            if not isinstance(argument, dict):
+                continue
+            for key in ("name", "value"):
+                text = argument.get(key)
+                if isinstance(text, str) and text.split("=", 1)[0] in REGISTRY_OVERRIDE_FLAGS:
+                    return True
+    for variable in package.get("environmentVariables") or []:
+        name = variable.get("name") if isinstance(variable, dict) else None
+        if isinstance(name, str) and name.upper() in REGISTRY_OVERRIDE_VARIABLES:
+            return True
+    return False
+
+
 def _source_allowed(package: dict[str, Any]) -> bool:
     allowed = ALLOWED_SOURCES.get(package.get("registryType", ""))
     base = package.get("registryBaseUrl", allowed)
@@ -98,6 +118,7 @@ def _source_allowed(package: dict[str, Any]) -> bool:
         and base.rstrip("/") == allowed
         and isinstance(identifier, str)
         and _NAME_GRAMMAR[package["registryType"]].fullmatch(identifier) is not None
+        and not _overrides_registry(package)
     )
 
 
