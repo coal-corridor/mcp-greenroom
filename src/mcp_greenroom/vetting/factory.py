@@ -4,7 +4,7 @@ from mcp_greenroom.config import Settings
 from mcp_greenroom.interfaces import ClassifierProvider
 from mcp_greenroom.risk.live import LiveProvider
 from mcp_greenroom.risk.replay import ReplayProvider
-from mcp_greenroom.scanner.null import NullScanner
+from mcp_greenroom.scanner.yara import YaraScanner
 from mcp_greenroom.vetting.pipeline import Policy, VettingPipeline
 
 
@@ -19,4 +19,4 @@ def build_provider(settings: Settings) -> ClassifierProvider:
 
 
 def build_pipeline(settings: Settings) -> VettingPipeline:
-    return VettingPipeline(build_provider(settings), NullScanner(), Policy.from_settings(settings))
+    return VettingPipeline(build_provider(settings), YaraScanner(), Policy.from_settings(settings))
