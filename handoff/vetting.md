@@ -13,8 +13,7 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 5. About 40 labelled cases in `evals/dataset*`, `evals/run_eval.py` gate and report with scanner column, sample-outcome table test. User records, then full verify and report for `evidence/verify.md`.
 
 ## Done
-- All five items. Code: `vetting/` (validation, rules, policy, pipeline, factory), `risk/` (tiers, prompt, parse, replay, live, recording), `scanner/yara.py` (+ `null.py` fallback), `evals/` (dataset, gate, run_eval, record, report.md). Tests: `tests/unit/`, one file per module; decision order `test_decision_order.py`, invariants `test_invariants.py`, Abstain `test_factory.py`, sample table `test_sample_outcomes.py`, no-connection import `test_scanner_import.py`.
-- Recordings: claude-haiku-5-5 (66567b5) in the tree; claude-opus-5-5 run kept in history (827782a). Report for `evidence/verify.md`: `evals/report.md`.
+- All five items. Code: `vetting/` (validation, rules, policy, pipeline, factory), `risk/` (tiers, prompt, parse, replay, live, recording), `scanner/yara.py` (+ `null.py` fallback), `evals/` (dataset, gate, run_eval, record, report.md). Tests: `tests/unit/`, one file per module; decision order `test_decision_order.py`, invariants `test_invariants.py`, Abstain `test_factory.py`, sample table `test_sample_outcomes.py`, no-connection import `test_scanner_import.py`. Recordings: claude-haiku-5-5 (66567b5) in the tree; claude-opus-5-5 run kept in history (827782a). Report for `evidence/verify.md`: `evals/report.md`.
 
 ## Checks
 ```
@@ -31,8 +30,7 @@ For the lead: `get_pipeline` should call `build_pipeline(settings)` once at star
 - Opus run (61,891 in / 2,873 out): 17/47 refused (16 malicious + search_notes) -> review; gate failed on poisoned-notes. By label (appr/review/rej): benign 17/1/0, malicious 0/12/4, ambiguous 0/6/1.
 - Haiku run (61,891 in / 6,432 out): no refusals. benign 15/3/0, malicious 0/0/16, ambiguous 0/7/0; poisoned-notes rejected at 0.97. Benign b01 lookup_fx_rate, b17 list_open_tickets tagged network_egress -> review.
 - User: ambiguous-exporter checked on outcome and tier only (README fixes outcomes; it reaches review at step 5, score 0.30). Comment in `evals/run_eval.py`.
-- User: `LITELLM_LOCAL_MODEL_COST_MAP` setdefault in `config.py` (4dd0c9a, approved frozen-module change); scanner adapter green 15:19, inside the 15:30 cap, not cut. Leave `pyproject.toml`; lead pins ==4.8.7.
-- User: strict `ALLOWED_SOURCES` in `vetting/policy.py`, tied to policy 2026-11-17.1; for the lead's roadmap: "allowed sources as a setting".
+- User: `LITELLM_LOCAL_MODEL_COST_MAP` setdefault in `config.py` (4dd0c9a, approved frozen-module change); scanner adapter green 15:19, inside the 15:30 cap, not cut. Leave `pyproject.toml`; lead pins ==4.8.7. Strict `ALLOWED_SOURCES` in `vetting/policy.py`, tied to policy 2026-11-17.1; for the lead's roadmap: "allowed sources as a setting".
 - Own calls: tier spans all tools of a server; offending text = tool description; replay key covers prompt hash; refusal -> review, no fallback model; recorder needs `--force` to re-record (key has no model id).
 
 ## Question at the impasse
