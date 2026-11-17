@@ -37,3 +37,50 @@ def test_scanner_findings_are_shown_with_every_outcome(
     decision = pipeline(full, findings=[match]).vet(submission)  # type: ignore[arg-type]
     assert decision.outcome is outcome
     assert match in decision.findings
+
+
+class OddProvider:
+    """A provider that fails in a way the interface does not name."""
+
+    def __init__(self, behaviour: str) -> None:
+        self.behaviour = behaviour
+
+    def classify(self, tool: Tool) -> object:
+        if self.behaviour == "raises_runtime_error":
+            raise RuntimeError("boom")
+        if self.behaviour == "raises_value_error":
+            raise ValueError("bad json")
+        if self.behaviour == "returns_none":
+            return None
+        if self.behaviour == "answers_for_another_tool":
+            return risk("some_other_tool")
+        if self.behaviour == "answers_for_the_first_tool_only":
+            return risk("get_balance")
+        raise AssertionError(self.behaviour)
+
+
+ODD = [
+    "raises_runtime_error",
+    "raises_value_error",
+    "returns_none",
+    "answers_for_another_tool",
+    "answers_for_the_first_tool_only",
+]
+
+
+@pytest.mark.parametrize("behaviour", ODD)
+def test_provider_failure_never_approves(behaviour: str) -> None:
+    from mcp_greenroom.vetting.pipeline import VettingPipeline
+    from tests.fakes import FakeScanner
+    from tests.unit.test_decision_order import POLICY
+
+    pipe = VettingPipeline(OddProvider(behaviour), FakeScanner(), POLICY)  # type: ignore[arg-type]
+    decision = pipe.vet(PAYMENTS)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
+    assert decision.reasons
+
+
+@pytest.mark.parametrize("unavailable", [True, False])
+def test_named_provider_failures_never_approve(unavailable: bool) -> None:
+    decision = pipeline({}, unavailable=unavailable).vet(PAYMENTS)
+    assert decision.outcome is Outcome.HUMAN_REVIEW
