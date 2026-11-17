@@ -155,3 +155,22 @@ def test_every_command_takes_api_and_token(command: str) -> None:
 
     assert "--api" in result.stdout
     assert "--token" in result.stdout
+
+
+def test_cli_tests_do_not_read_the_local_env_file(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    (tmp_path / ".env").write_text("MCP_GREENROOM_API=http://from-dotenv.test\n")
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("MCP_GREENROOM_API", raising=False)
+    hosts: list[str] = []
+
+    def route(request: httpx.Request) -> httpx.Response:
+        hosts.append(request.url.host)
+        return httpx.Response(200, json={"servers": []})
+
+    monkeypatch.setattr(cli, "TRANSPORT", httpx.MockTransport(route))
+
+    runner.invoke(app, ["list"])
+
+    assert hosts and "from-dotenv.test" not in hosts
