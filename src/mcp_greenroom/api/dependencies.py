@@ -10,7 +10,7 @@ from typing import Annotated
 
 from fastapi import Header, HTTPException, Request, status
 
-from mcp_greenroom.config import DEV_IDENTITIES
+from mcp_greenroom.config import DEV_IDENTITIES, Settings
 from mcp_greenroom.interfaces import Pipeline, Store
 from mcp_greenroom.models import Identity
 
@@ -24,6 +24,12 @@ def get_store(request: Request) -> Store:
     """The store. Registry defines its methods (mcp_greenroom.store.SqlStore)."""
     store: Store = request.app.state.store
     return store
+
+
+def get_settings(request: Request) -> Settings:
+    """The validated settings the app was built with."""
+    settings: Settings = request.app.state.settings
+    return settings
 
 
 def get_identity(authorization: Annotated[str | None, Header()] = None) -> Identity:

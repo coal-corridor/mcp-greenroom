@@ -1,5 +1,8 @@
 """Validation rejection (parent spec): 422, stable rule id, readable message, nothing stored."""
 
+from typing import Any
+
+import pytest
 from fastapi.testclient import TestClient
 
 from tests.api.conftest import DANA, sample
@@ -32,8 +35,14 @@ def test_a_refusal_stores_no_decision(client: TestClient) -> None:
     assert response.status_code == 201, response.text
 
 
-def test_a_body_that_is_not_a_submission_is_refused_with_a_rule_id(client: TestClient) -> None:
-    response = client.post("/submissions", json={"server": "nope"}, headers=DANA)
+@pytest.mark.parametrize(
+    "body",
+    [{"server": "nope"}, {"server": {}, "tools": []}, {"server": {"name": "a/b"}, "tools": []}],
+)
+def test_a_body_that_is_not_a_submission_is_refused_with_a_rule_id(
+    client: TestClient, body: dict[str, Any]
+) -> None:
+    response = client.post("/submissions", json=body, headers=DANA)
 
     assert response.status_code == 422, response.text
     assert response.json()["rule_id"] == "validation.malformed"
