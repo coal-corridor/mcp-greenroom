@@ -29,6 +29,8 @@ verify: all requested stages passed or were skipped.
 
 The pytest progress dots and the evaluation report are left out of this block. The report is in the next section.
 
+Repeated after the README was written (`00cd4e5`), following its Setup section in a new directory (cloned from the local repository, branch `evidence`): `uv sync` exit 0, `./scripts/verify.sh` exit 0 with lint, types, test and eval all `pass` and `433 passed in 20.60s`, `./scripts/demo.sh` exit 0 with `Demo complete: every step gave the exit code it expected.`
+
 ## Tests
 
 433 tests, counted with `uv run pytest --collect-only -q`.
@@ -108,7 +110,7 @@ What the table shows:
 
 ## Demo
 
-`./scripts/demo.sh` in the same fresh clone. Exit 0. Fifteen steps, each with the exit code it expected.
+`./scripts/demo.sh` in the same fresh clone. Exit 0. Fourteen steps, each with the exit code it expected.
 
 <details>
 <summary>Full output, unedited</summary>
