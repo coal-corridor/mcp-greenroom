@@ -59,3 +59,24 @@ def test_main_path_through_the_real_pipeline(real_settings: Settings) -> None:
         assert elapsed < 5.0
         listed = client.get("/v0.1/servers").json()["servers"]
         assert [s["server"]["name"] for s in listed] == ["com.examplebank/payments-readonly"]
+
+
+def test_refusals_and_decisions_carry_the_same_policy_version(tmp_path: Path) -> None:
+    # One source: the policy_version setting of the Settings object the app is built with.
+    settings = Settings(  # type: ignore[call-arg]
+        _env_file=None,
+        database_url=f"sqlite:///{tmp_path / 'greenroom.db'}",
+        snapshot_path=tmp_path / "last-good.json",
+        recordings_dir=ROOT / "evals" / "recordings",
+        policy_version="test-policy-9",
+    )
+    with TestClient(api_main.create_app(settings)) as client:
+        decided = client.post("/submissions", json=sample("payments-readonly"), headers=DANA)
+        refused = client.post("/submissions", json=sample("invalid-unpinned"), headers=DANA)
+        assert (decided.status_code, refused.status_code) == (201, 422)
+        versions = set()
+        for response in (decided, refused):
+            submission_id = response.json()["submission_id"]
+            trail = client.get(f"/submissions/{submission_id}/audit", headers=DANA).json()
+            versions |= {event["policy_version"] for event in trail["events"]}
+        assert versions == {"test-policy-9"}
