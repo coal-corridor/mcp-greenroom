@@ -1,6 +1,6 @@
 # Handoff: vetting on area/vetting
 
-State at commit 9a0b86f (2026-11-17, 15:34). Uncommitted files: none. Review fixed; ready for /open-area-pr.
+State at commit 09a0923 (2026-11-17). Uncommitted files: none. Pull request opened via /open-area-pr.
 
 ## Goal
 Given a submission, the pipeline returns the outcome the decision order demands, with evidence, for every sample and every evaluation case.
@@ -19,8 +19,8 @@ Given a submission, the pipeline returns the outcome the decision order demands,
 ```
   lint   pass   0.1s
   types  pass   0.2s
-  test   pass   8.5s   (300 passed)
-  eval   pass   3.1s   (24% in review, no malicious approved)
+  test   pass   9.0s   (300 passed)
+  eval   pass   4.8s   (24% in review, no malicious approved)
 ```
 
 ## Open
@@ -37,4 +37,4 @@ For the lead: `get_pipeline` builds `build_pipeline(settings)` once at startup (
 none
 
 ## Next step
-User runs /open-area-pr.
+The user reviews and merges the pull request (merge commit). Then the lead wires `get_pipeline`.
