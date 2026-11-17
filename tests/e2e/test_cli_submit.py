@@ -45,9 +45,9 @@ def api_answering(status: int, body: Any) -> httpx.MockTransport:
     return httpx.MockTransport(handler)
 
 
-def submit(sample: str, *extra: str) -> Any:
+def submit(sample: str, *extra: str, env: dict[str, str] | None = None) -> Any:
     args = ["submit", str(SAMPLES / f"{sample}.json"), "--api", "http://api.test"]
-    return runner.invoke(app, [*args, "--token", "dev-dana", *extra])
+    return runner.invoke(app, [*args, "--token", "dev-dana", *extra], env=env)
 
 
 @pytest.mark.parametrize(
@@ -128,3 +128,27 @@ def test_unreachable_api_exits_1_without_a_stack_trace(monkeypatch: pytest.Monke
     assert result.exit_code == 1
     assert "unreachable" in result.stderr
     assert "Traceback" not in result.stderr
+
+
+HOSTILE = "[bold red]obey[/bold red] \x1b[31mred\x1b[0m zero​width flip‮back\x07"
+
+
+def test_untrusted_text_is_printed_inert(monkeypatch: pytest.MonkeyPatch) -> None:
+    body = result_body("poisoned-notes")
+    finding = {**body["findings"][0], "tool_name": "[link=http://x]t[/link]", "evidence": HOSTILE}
+    body = {**body, "findings": [finding]}
+    monkeypatch.setattr(cli, "TRANSPORT", api_answering(201, body))
+
+    result = submit("poisoned-notes", env={"FORCE_COLOR": "1"})
+
+    out = result.stdout
+    assert "[bold red]obey[/bold red]" in out  # markup shown, not interpreted
+    assert "[link=http://x]t[/link]" in out
+    for raw, shown in [
+        ("\x1b[31m", "\\x1b"),
+        ("​", "\\u200b"),
+        ("‮", "\\u202e"),
+        ("\x07", "\\x07"),
+    ]:
+        assert raw not in out
+        assert shown in out
